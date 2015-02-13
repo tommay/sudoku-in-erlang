@@ -1,14 +1,16 @@
 -module(spud).
--export([update_one/2, or_else/3, do_while/3, length/1, first/1]).
+-export([update_one/2, or_else/3, do_while/3, length/1]).
 
 % Some handy utility functions.
 
 % Returns a function that takes a List and applies UpdateFunc to each
 % element in turn until it returns {ok, NewElement}, then returns {ok,
-% NewList} where NewList has the element updated.  Returns
-% {not_updated, List} if no element was updated.  Does some stunts
-% with passing a function to itself behind the scenes to simulate an
-% anonymous recursive function.
+% NewList, NewElement} where NewList has the element updated.
+% Returning a list allows object:update to set the attribute to
+% NewList then return both NewList and NewElement for subsequent
+% use/inspection.  Returns {not_updated, List} if no element was
+% updated.  Does some stunts with passing a function to itself behind
+% the scenes to simulate an anonymous recursive function.
 %
 update_one(Type, UpdateFunc) ->
     Func =
@@ -16,13 +18,13 @@ update_one(Type, UpdateFunc) ->
 		{not_updated, []};
 	    (Myself, Elements = [Element|Rest]) ->
 		case UpdateFunc(Type, Element) of
-		    {ok, NewElement} ->
+		    {ok, UpdatedElement} ->
 		        % Once we've updated one element, leave the rest as-is.
-			{ok, [NewElement | Rest]};
+			{ok, [[UpdatedElement | Rest], UpdatedElement]};
 		    _ ->
 			case Myself(Myself, Rest) of
-			    {ok, NewElements} ->
-				{ok, [Element | NewElements]};
+			    {ok, [NewElements, UpdatedElement]} ->
+				{ok, [[Element | NewElements], UpdatedElement]};
 			    _ ->
 				{not_updated, Elements}
 			end
@@ -52,8 +54,6 @@ do_while(Type, Object = {Type, _}, Func) ->
 	    Result
     end.
 
-first([H|_]) ->
-    H.
 
 length([]) ->
     0;

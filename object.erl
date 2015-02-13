@@ -32,14 +32,17 @@ set(Type, {Type, Dict}, Attribute, Value) ->
 
 % UpdateFunc(Value) takes the attribute's current Value and returns
 % {ok, NewValue} if the attribute should be updated, or something else
-% if it shouldn't.
+% if it shouldn't.  If the attribute value is a list, UpdateFunc can
+% optionally return {ok, NewValue, ChangedElement}.
 %
-% Returns {ok, NewObject} if the attribute was updated, otherwise
-% {not_updated, Object}.
+% Returns {ok, NewObject [, ChangedElement]} if the attribute was
+% updated, otherwise {not_updated, Object}.
 %
 update(Type, Object = {Type, _}, Attribute, UpdateFunc) ->
     Value = get(Type, Object, Attribute),
     case UpdateFunc(Value) of
+	{ok, [NewValue, ChangedElement]} ->
+	    {ok, [set(Type, Object, Attribute, NewValue), ChangedElement]};
 	{ok, NewValue} ->
 	    {ok, set(Type, Object, Attribute, NewValue)};
 	_ ->

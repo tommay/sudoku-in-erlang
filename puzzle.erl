@@ -18,10 +18,38 @@ place_or_eliminate(Type = puzzle, Puzzle = {Type, _}) ->
 place_one_missing(Type = puzzle, _Puzzle = {Type, nyi}) ->
     false.
 
+# Returns {ok, NewPuzzle} or {not_updated, Puzzle}.
+#
 place_one_forced(Type = puzzle, Puzzle = {Type, _}) ->
-    object:update(puzzle, Puzzle, positions,
-		  fun spud:update_one(position,
-				      position:place_forced/2).
+    Updated = object:update(puzzle, Puzzle, positions,
+			    fun spud:update_one(position,
+						position:place_forced/2)),
+    case Updated of
+	{ok, [NewPuzzle, ChangedPosition]} ->
+	    {ok, do_exclusions(puzzle, Puzzle, position, ChangedPosition)};
+	_ ->
+	    {not_updated, Puzzle}
+    end.
+
+# Returns new Puzzle.
+#
+do_exclusions(puzzle, Puzzle = {puzzle, _}, position, ChangedPosition = {position, _}) ->
+    Digit = object:get(position, ChangedPosition, placed),
+    object:update(
+      puzzle, Puzzle, positions,
+      fun (Positions) ->
+	      lists:map(
+		fun (Position = {position, _}) ->
+			case position:excluded_by(Position, ChangedPosition) of
+			    true ->
+				position:not_possible(Position, Digit);
+			    false ->
+				Position
+			end
+		end,
+		Positions)
+      end).
+
 
 eliminate_with_tricky_sets(Type = puzzle, _Puzzle = {Type, nyi}) ->
     false.
