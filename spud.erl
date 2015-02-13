@@ -3,35 +3,21 @@
 
 % Some handy utility functions.
 
-% Returns a function that takes a List and applies UpdateFunc to each
-% element in turn until it returns {ok, NewElement}, then returns {ok,
-% NewList, NewElement} where NewList has the element updated.
-% Returning a list allows object:maybe_update to set the attribute to
-% NewList then return both NewList and NewElement for subsequent
-% use/inspection.  Returns {not_updated, List} if no element was
-% updated.  Does some stunts with passing a function to itself behind
-% the scenes to simulate an anonymous recursive function.
-%
-maybe_update_one(MaybeUpdateFunc) ->
-    Func =
-	fun (_Myself, []) ->
-		{not_updated, []};
-	    (Myself, Elements = [Element={Type,_}|Rest]) ->
-		case MaybeUpdateFunc(Element) of
-		    {ok, UpdatedElement} ->
-		        % Once we've updated one element, leave the rest as-is.
-			{ok, [UpdatedElement | Rest], UpdatedElement};
-		    _ ->
-			case Myself(Myself, Rest) of
-			    {ok, NewElements, UpdatedElement} ->
-				{ok, [Element | NewElements], UpdatedElement};
-			    _ ->
-				{not_updated, Elements}
-			end
-		end
-	end,
-    fun (Elements) -> Func(Func, Elements) end.
-
+maybe_update_one(_Elements = [], _MaybeUpdateFunc) ->
+    {not_updated, Elements};
+maybe_update_one(Elements = [Element={Type,_}|Rest], MaybeUpdateFunc) ->
+    case MaybeUpdateFunc(Element) of
+	{ok, UpdatedElement} ->
+	    % Once we've updated one element, leave the rest as-is.
+	    {ok, [UpdatedElement | Rest], UpdatedElement};
+	_ ->
+	    case maybe_update_one(Rest, MaybeUpdateFunc) of
+		{ok, NewElements, UpdatedElement} ->
+		    {ok, [Element | NewElements], UpdatedElement};
+		_ ->
+		    {not_updated, Elements}
+	    end
+    end.
 
 % Call Funcs on Object in turn until one of them succeeds or they all
 % fail.  Retuns {ok. NewObject} or {not_updated, Object}.

@@ -10,10 +10,10 @@
 % inheritance.  Methods are defined as top-level functions in their
 % respective source files.
 
-new(Type) ->
+new(Type) when is_atom(Type)->
     {Type, dict:new()}.
 
-new(Type, Attributes) ->
+new(Type, Attributes) when is_atom(Type) ->
     {Type,
      lists:foldl(
        fun ({Attribute, Value}, Object) ->
@@ -24,27 +24,29 @@ new(Type, Attributes) ->
        new(Type),
        Attributes)}.
 
-get({_, Dict}, Attribute) ->
-    dict:fetch(Attribute, Dict).
+get({Type, Dict}, Attribute) when is_atom(Type) and is_atom(Attribute) ->
+    case dict:is_dict(Dict) of
+	true -> dict:fetch(Attribute, Dict)
+    end.
 
-set({Type, Dict}, Attribute, Value) ->
-    {Type, dict:update(Attribute, Dict, Value)}.
+set({Type, Dict}, Attribute, Value) when is_atom(Type) and is_atom(Attribute) ->
+    case dict:is_dict(Dict) of
+	true -> {Type, dict:update(Attribute, Dict, Value)}
+    end.
 
 % MaybeUpdateFunc(Value) takes the attribute's current Value and
 % returns {ok, NewValue} if the attribute should be updated, or
-% something else if it shouldn't.  If the attribute value is a list,
-% UpdateFunc can optionally return {ok, NewValue, ChangedElement}.
+% something else if it shouldn't.
 %
-% Returns {ok, NewObject [, ChangedElement]} if the attribute was
+% Returns {ok, NewObject} if the attribute was
 % updated, otherwise {not_updated, Object}.
 %
-maybe_update(Object = {_Type, _}, Attribute, MaybeUpdateFunc) ->
+maybe_update(Object = {Type, _}, Attribute, MaybeUpdateFunc)
+  when is_atom(Type) and is_atom(Attribute) and is_function(MaybeUpdateFunc) ->
     Value = get(Object, Attribute),
     case MaybeUpdateFunc(Value) of
 	{ok, NewValue} ->
 	    {ok, set(Object, Attribute, NewValue)};
-	{ok, NewValue, ChangedElement} ->
-	    {ok, set(Object, Attribute, NewValue), ChangedElement};
 	_ ->
 	    {not_updated, Object}
     end.

@@ -1,10 +1,10 @@
 -module(puzzle).
--export([solve/1]).
+-export([new/1,solve/1]).
 
-Puzzle = object:new(puzzle, [{positions, create_positions()}]).
-
-create_positions() ->
-    lists:map(0..80, fun (N) -> position:new(N) end).
+new(Setup) ->
+    object:new(
+      puzzle,
+      [{positions, positions:new(Setup)}].
 
 solve(Puzzle = {puzzle, _}) ->
     spud:do_while(Puzzle, fun maybe_place_or_eliminate/1).
@@ -21,36 +21,29 @@ maybe_place_one_missing(_Puzzle = {puzzle, nyi}) ->
 # Returns {ok, NewPuzzle} or {not_updated, Puzzle}.
 #
 maybe_place_one_forced(Puzzle = {puzzle, _}) ->
-    Updated = object:maybe_update(
-		Puzzle, positions,
-		fun spud:maybe_update_one(position:maybe_place_forced/1)),
-    case Updated of
-	{ok, NewPuzzle, ChangedPosition} ->
-	    {ok, do_exclusions(Puzzle, ChangedPosition)};
-	_ ->
-	    {not_updated, Puzzle}
-    end.
-
-# Returns new Puzzle.
-#
-do_exclusions(Puzzle = {puzzle, _}, ChangedPosition = {position, _}) ->
-    Digit = object:get(ChangedPosition, placed),
-    object:update(
+    object:maybe_update(
       Puzzle, positions,
-      fun (Positions) ->
-	      lists:map(
-		fun (Position = {position, _}) ->
-			case position:is_excluded_by(Position, ChangedPosition) of
-			    true ->
-				position:not_possible(Position, Digit);
-			    false ->
-				Position
-			end
-		end,
-		Positions)
-      end).
-
+      fun positions:maybe_update_one_forced/1).
 
 maybe_eliminate_with_tricky_sets(_Puzzle = {puzzle, nyi}) ->
     false.
+
+create_positions(Setup) ->
+    Digits = lists:map(
+	       fun (Char) ->
+		       case Char of
+			   45 ->
+			       undefined;
+			   _ ->
+			       Char - 48
+		       end
+	       end,
+	       Setup),
+    Seq = lists:seq(0, 80),
+    Zipped = lists:zip(Seq, Setup),
+    lists:map(
+      fun ({N, Digit}) ->
+	      position:new(N, Digit)
+      end,
+      Zipped).
 

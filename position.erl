@@ -1,14 +1,17 @@
 -module(position).
 -export([new/1, is_excluded_by/2, not_possible/2, maybe_place_forced/1]).
 
-new(Number) ->
+new(Number. Digit) ->
     Row = Number div 9,
     Col = Number rem 9,
     Square = (Row div 3)*3 + (Col div 3),
     object:new(
       position,
       [{number, Number}, {row, Row}, {col, Col}, {square, Square},
-       {possible, create_possible()}, place]).
+       {possible, init_possible()}, {placed, Digit}]).
+
+init_possible() ->
+    sets:from_list(lists:seq(0, 8)).
 
 is_excluded_by(Position = {position, _}, Other = {position, _}) ->
     object:get(Position, number) /= object:get(Other, number) and
@@ -25,7 +28,7 @@ not_possible(Position = {position, _}, Digit) ->
 	      sets:del_element(Possible, Digit)
       end).
 
-% Returns {ok, NewPosition} is successful.
+% Returns {ok, NewPosition} if successful.
 %
 maybe_place_forced(Position = {position, _}) ->
     Possible = object:get(Position, possible),
