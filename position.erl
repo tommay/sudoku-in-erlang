@@ -1,5 +1,5 @@
 -module(position).
--export([new/1, excluded_by/2, place_forced/2]).
+-export([new/1, is_excluded_by/2, place_forced/1]).
 
 new(Number) ->
     Row = Number div 9,
@@ -9,16 +9,13 @@ new(Number) ->
       position,
       [{number, Number}, placed, {row, Row}, {col, Col}, {square, Square}]).
 
-excluded_by(Position = {position, _}, Other = {position, _}) ->
-    object:get(position, Position, number) /= object:get(position, Other, number) and
-	(object:get(position, Position, row) ==
-	     object:get(position, Other, row) or
-	 object:get(position, Position, col) ==
-	     object:get(position, Other, col) or
-	 object:get(position, Position, square) ==
-	     object:get(position, Other, square)).
+is_excluded_by(Position = {position, _}, Other = {position, _}) ->
+    object:get(Position, number) /= object:get(Other, number) and
+	(object:get(Position, row) == object:get(Other, row) or
+	 object:get(Position, col) == object:get(Other, col) or
+	 object:get(Position, square) == object:get(Other, square)).
 
-place_forced(Type = position, Position = {Type, _}) ->
+place_forced(Position = {position, _}) ->
     Possible = possible(Position),
     case placed(Position) == undefined and spud:length(Possible) == 1 of
 	true ->
@@ -29,8 +26,8 @@ place_forced(Type = position, Position = {Type, _}) ->
 	    {false, Position}
     end.
 
-possible(Type = position, Position = {Type, _}) ->
-    object:get(position, Position, possible).
+possible(Position = {position, _}) ->
+    object:get(Position, possible).
 
-place(Type = position, Position = {Type, _}, Digit) ->
-    set(position, Position, Digit).
+place(Position = {position, _}, Digit) ->
+    set(Position, Digit).

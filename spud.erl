@@ -12,12 +12,12 @@
 % updated.  Does some stunts with passing a function to itself behind
 % the scenes to simulate an anonymous recursive function.
 %
-update_one(Type, UpdateFunc) ->
+update_one(UpdateFunc) ->
     Func =
 	fun (_Myself, []) ->
 		{not_updated, []};
-	    (Myself, Elements = [Element|Rest]) ->
-		case UpdateFunc(Type, Element) of
+	    (Myself, Elements = [Element={Type,_}|Rest]) ->
+		case UpdateFunc(Element) of
 		    {ok, UpdatedElement} ->
 		        % Once we've updated one element, leave the rest as-is.
 			{ok, [[UpdatedElement | Rest], UpdatedElement]};
@@ -36,27 +36,25 @@ update_one(Type, UpdateFunc) ->
 % Call Funcs on Object in turn until one of them succeeds or they all
 % fail.  Retuns {ok. NewObject} or {not_updated, Object}.
 %
-or_else(Type, Object = {Type, _}, _Funcs = []) ->
+or_else(Object = {_Type, _}, _Funcs = []) ->
     {not_updated, Object};
-or_else(Type, Object = {Type, _}, [Func|Rest]) ->
-    case Func(Type, Object) of
+or_else(Object = {_Type, _}, [Func|Rest]) ->
+    case Func(Object) of
 	Result = {ok, _} ->
 	    Result;
 	_ ->
-	    or_else(Type, Object, Rest)
+	    or_else(Object, Rest)
     end.
 
-do_while(Type, Object = {Type, _}, Func) ->
-    case Func(Type, Object) of
+do_while(Object = {_Type, _}, Func) ->
+    case Func(Object) of
 	{ok, NewObject} ->
-	    do_while(Type, NewObject, Func);
+	    do_while(NewObject, Func);
 	Result = _ ->
 	    Result
     end.
-
 
 length([]) ->
     0;
 length([_|T]) ->
     lists:foldl(fun (_, A) -> A + 1 end, 1, T).
-

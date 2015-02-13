@@ -1,5 +1,5 @@
 -module(object).
--export([new/1, new/2, set/4, get/3, update/4]).
+-export([new/1, new/2, set/3, get/2, update/3]).
 
 % Support objects as {type, Dictionary}, where type is an atom and
 % Dictionary is a dict:new().  Including the type provides runtime
@@ -17,17 +17,17 @@ new(Type, Attributes) ->
     {Type,
      lists:foldl(
        fun ({Attribute, Value}, Object) ->
-	       set(Type, Object, Attribute, Value);
+	       set(Object, Attribute, Value);
 	   (Attribute, Object) ->
-	       set(Type, Object, Attribute, undefined)
+	       set(Object, Attribute, undefined)
        end,
        new(Type),
        Attributes)}.
 
-get(Type, {Type, Dict}, Attribute) ->
+get({_, Dict}, Attribute) ->
     dict:fetch(Attribute, Dict).
 
-set(Type, {Type, Dict}, Attribute, Value) ->
+set({Type, Dict}, Attribute, Value) ->
     {Type, dict:update(Attribute, Dict, Value)}.
 
 % UpdateFunc(Value) takes the attribute's current Value and returns
@@ -38,13 +38,13 @@ set(Type, {Type, Dict}, Attribute, Value) ->
 % Returns {ok, NewObject [, ChangedElement]} if the attribute was
 % updated, otherwise {not_updated, Object}.
 %
-update(Type, Object = {Type, _}, Attribute, UpdateFunc) ->
-    Value = get(Type, Object, Attribute),
+update(Object = {_Type, _}, Attribute, UpdateFunc) ->
+    Value = get(Object, Attribute),
     case UpdateFunc(Value) of
-	{ok, [NewValue, ChangedElement]} ->
-	    {ok, [set(Type, Object, Attribute, NewValue), ChangedElement]};
 	{ok, NewValue} ->
-	    {ok, set(Type, Object, Attribute, NewValue)};
+	    {ok, set(Object, Attribute, NewValue)};
+	{ok, [NewValue, ChangedElement]} ->
+	    {ok, [set(Object, Attribute, NewValue), ChangedElement]};
 	_ ->
 	    {not_updated, Object}
     end.
