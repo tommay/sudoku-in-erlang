@@ -3,19 +3,30 @@
 
 % Some handy utility functions.
 
-maybe_update_one(_Elements = [], _MaybeUpdateFunc) ->
-    {not_updated, Elements};
-maybe_update_one(Elements = [Element={Type,_}|Rest], MaybeUpdateFunc) ->
-    case MaybeUpdateFunc(Element) of
+% Strip the type off and just deal with the List, then add the Type back.
+%
+maybe_update_one(Data = {Type, List}, MaybeUpdateFunc) ->
+    case maybe_update_one(List, MaybeUpdateFunc) of
+	{ok, NewList, ChangedElement} ->
+	    {ok, {Type, NewList}, ChangedElement};
+	_ ->
+	    {not_updated, Data}
+    end.
+
+maybe_update_one(List = [], _MaybeUpdateFunc) ->
+    {not_updated, List};
+
+maybe_update_one(List = [First|Rest]}, MaybeUpdateFunc) ->
+    case MaybeUpdateFunc(First) of
 	{ok, UpdatedElement} ->
 	    % Once we've updated one element, leave the rest as-is.
 	    {ok, [UpdatedElement | Rest], UpdatedElement};
 	_ ->
 	    case maybe_update_one(Rest, MaybeUpdateFunc) of
-		{ok, NewElements, UpdatedElement} ->
-		    {ok, [Element | NewElements], UpdatedElement};
+		{ok, NewList, UpdatedElement} ->
+		    {ok, [First | NewList], UpdatedElement};
 		_ ->
-		    {not_updated, Elements}
+		    {not_updated, List}
 	    end
     end.
 
