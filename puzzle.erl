@@ -21,8 +21,9 @@ place_one_missing(_Puzzle = {puzzle, nyi}) ->
 # Returns {ok, NewPuzzle} or {not_updated, Puzzle}.
 #
 place_one_forced(Puzzle = {puzzle, _}) ->
-    Updated = object:update(Puzzle, positions,
-			    fun spud:update_one(position:place_forced/1)),
+    Updated = object:maybe_update(
+		Puzzle, positions,
+		fun spud:maybe_update_one(position:maybe_place_forced/1)),
     case Updated of
 	{ok, NewPuzzle, ChangedPosition} ->
 	    {ok, do_exclusions(Puzzle, ChangedPosition)};

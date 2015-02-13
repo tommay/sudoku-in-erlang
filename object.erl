@@ -30,17 +30,17 @@ get({_, Dict}, Attribute) ->
 set({Type, Dict}, Attribute, Value) ->
     {Type, dict:update(Attribute, Dict, Value)}.
 
-% UpdateFunc(Value) takes the attribute's current Value and returns
-% {ok, NewValue} if the attribute should be updated, or something else
-% if it shouldn't.  If the attribute value is a list, UpdateFunc can
-% optionally return {ok, NewValue, ChangedElement}.
+% MaybeUpdateFunc(Value) takes the attribute's current Value and
+% returns {ok, NewValue} if the attribute should be updated, or
+% something else if it shouldn't.  If the attribute value is a list,
+% UpdateFunc can optionally return {ok, NewValue, ChangedElement}.
 %
 % Returns {ok, NewObject [, ChangedElement]} if the attribute was
 % updated, otherwise {not_updated, Object}.
 %
-update(Object = {_Type, _}, Attribute, UpdateFunc) ->
+maybe_update(Object = {_Type, _}, Attribute, MaybeUpdateFunc) ->
     Value = get(Object, Attribute),
-    case UpdateFunc(Value) of
+    case MaybeUpdateFunc(Value) of
 	{ok, NewValue} ->
 	    {ok, set(Object, Attribute, NewValue)};
 	{ok, NewValue, ChangedElement} ->
@@ -48,3 +48,8 @@ update(Object = {_Type, _}, Attribute, UpdateFunc) ->
 	_ ->
 	    {not_updated, Object}
     end.
+
+% Returns NewObject.
+%
+update(Object = {_Type, _}, Attribute, UpdateFunc) ->
+    set(Object, Attribute, UpdateFunc(get(Object, Attribute))).
