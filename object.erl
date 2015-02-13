@@ -43,8 +43,8 @@ update(Object = {_Type, _}, Attribute, UpdateFunc) ->
     case UpdateFunc(Value) of
 	{ok, NewValue} ->
 	    {ok, set(Object, Attribute, NewValue)};
-	{ok, [NewValue, ChangedElement]} ->
-	    {ok, [set(Object, Attribute, NewValue), ChangedElement]};
+	{ok, NewValue, ChangedElement} ->
+	    {ok, set(Object, Attribute, NewValue), ChangedElement};
 	_ ->
 	    {not_updated, Object}
     end.

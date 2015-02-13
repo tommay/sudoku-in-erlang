@@ -24,7 +24,7 @@ place_one_forced(Puzzle = {puzzle, _}) ->
     Updated = object:update(Puzzle, positions,
 			    fun spud:update_one(position:place_forced/1)),
     case Updated of
-	{ok, [NewPuzzle, ChangedPosition]} ->
+	{ok, NewPuzzle, ChangedPosition} ->
 	    {ok, do_exclusions(Puzzle, ChangedPosition)};
 	_ ->
 	    {not_updated, Puzzle}

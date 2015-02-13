@@ -20,11 +20,11 @@ update_one(UpdateFunc) ->
 		case UpdateFunc(Element) of
 		    {ok, UpdatedElement} ->
 		        % Once we've updated one element, leave the rest as-is.
-			{ok, [[UpdatedElement | Rest], UpdatedElement]};
+			{ok, [UpdatedElement | Rest], UpdatedElement};
 		    _ ->
 			case Myself(Myself, Rest) of
-			    {ok, [NewElements, UpdatedElement]} ->
-				{ok, [[Element | NewElements], UpdatedElement]};
+			    {ok, NewElements, UpdatedElement} ->
+				{ok, [Element | NewElements], UpdatedElement};
 			    _ ->
 				{not_updated, Elements}
 			end
