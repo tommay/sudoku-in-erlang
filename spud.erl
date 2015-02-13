@@ -36,18 +36,18 @@ maybe_update_one(MaybeUpdateFunc) ->
 % Call Funcs on Object in turn until one of them succeeds or they all
 % fail.  Retuns {ok. NewObject} or {not_updated, Object}.
 %
-or_else(Object = {_Type, _}, _Funcs = []) ->
+or_else(Object = {_Type, _}, _MaybeFuncs = []) ->
     {not_updated, Object};
-or_else(Object = {_Type, _}, [Func|Rest]) ->
-    case Func(Object) of
+or_else(Object = {_Type, _}, [MaybeFunc|Rest]) ->
+    case MaybeFunc(Object) of
 	Result = {ok, _} ->
 	    Result;
 	_ ->
 	    or_else(Object, Rest)
     end.
 
-do_while(Object = {_Type, _}, Func) ->
-    case Func(Object) of
+do_while(Object = {_Type, _}, MaybeFunc) ->
+    case MaybeFunc(Object) of
 	{ok, NewObject} ->
 	    do_while(NewObject, Func);
 	Result = _ ->
