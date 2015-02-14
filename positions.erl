@@ -2,15 +2,15 @@
 -export([new/1, solve/1, min_by_possible/1, maybe_update_one_forced/1]).
 
 new(Setup) ->
-    Digits = to_digits(Setup),
     List = [position:new(N) || N <- lists:seq(0, 80)],
     Positions = {positions, List},
+    Digits = to_digits(Setup),
     Zipped = lists:zip(List, Digits),
     {
       positions,
       lists:foldl(
-	fun ({Digit, Position = {position, _}}, Accum) ->
-		case position:get_placed(Position) of
+	fun ({Digit, Position a= {position, _}}, Accum) ->
+		case Digit of
 		    undefined ->
 			Accum;
 		    _ ->
