@@ -10,7 +10,7 @@ new(Setup) ->
       positions,
       lists:foldl(
 	fun ({Digit, Position = {position, _}}, Accum) ->
-		case object:get(Position, placed) of
+		case position:get_placed(Position) of
 		    undefined ->
 			Accum;
 		    _ ->
@@ -35,7 +35,7 @@ to_digits(Setup) ->
 
 place(Positions = {positions, List}, AtPosition, Digit) ->
     PlacedPosition = object:set(AtPosition, placed, Digit),
-    Number = object:get(PlacedPosition, number),
+    Number = position:get_number(PlacedPosition),
     NewPositions = {
       positions,
       [case object.get(P, number) == Number of
@@ -62,7 +62,7 @@ maybe_update_one(Positions = {positions, _}, MaybeUpdateFunc) ->
 # Returns NewPositions.
 #
 do_exclusions({positions, List}, ChangedPosition = {position, _}) ->
-    Digit = object:get(ChangedPosition, placed),
+    Digit = position:get_placed(ChangedPosition),
     {
       positions,
       lists:map(
@@ -84,14 +84,14 @@ do_exclusions({positions, List}, ChangedPosition = {position, _}) ->
 
     NextPosition = min_by_possible(Positions),
 
-    case object:get(NextPosition, placed) == undefined of
+    case position:get_placed(NextPosition) == undefined of
 	false ->
             % Solved.  Return Positions as a solution.
 	    % puts "Solved:"
 	    % print_puzzle
 	    {solved, Positions};
 	true ->
-	    Possible = object.get(NextPosition, possibile),
+	    Possible = position:get_possible(NextPosition),
 	    case possible:size(Possible) of
 		0 ->
 		    % Failed.  No solution to return.
@@ -108,3 +108,15 @@ do_exclusions({positions, List}, ChangedPosition = {position, _}) ->
 		      end)
 	    end
     end.
+
+-min_by_possible({positions, List}) ->
+    ByPossible =
+	lists:map(
+	  fun (Position = {position, _}) ->
+		  Possible = position:get_possible(Position),
+		  Size = possible:size(Possible),
+		  {Size, Position}
+	  end,
+	  List),
+    {_, MinPosition} = lists:min(ByPossible),
+    MinPosition.

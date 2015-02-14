@@ -44,3 +44,12 @@ maybe_place_forced(Position = {position, _}) ->
 		      not_updated
 	      end
       end).
+
+get_possible(Position = {position, _}) ->
+    object:get(Position, possible).
+
+get_placed(Position = {position, _}) ->
+    object:get(Position, placed).
+
+get_number(Position = {position, _}) ->
+    object:get(Position, number).
