@@ -82,16 +82,16 @@ do_exclusions({positions, List}, ChangedPosition = {position, _}) ->
     % to guess and recurse.  We can distinguish by examining the
     % position with the fewest possibilities remaining.
 
-    NextPosition = min_by_possible(Positions),
+    MinPosition = min_by_possible(Positions),
 
-    case position:get_placed(NextPosition) == undefined of
+    case position:get_placed(MinPosition) == undefined of
 	false ->
             % Solved.  Return Positions as a solution.
 	    % puts "Solved:"
 	    % print_puzzle
 	    {solved, Positions};
 	true ->
-	    Possible = position:get_possible(NextPosition),
+	    Possible = position:get_possible(MinPosition),
 	    case possible:size(Possible) of
 		0 ->
 		    % Failed.  No solution to return.
@@ -104,7 +104,7 @@ do_exclusions({positions, List}, ChangedPosition = {position, _}) ->
 		    possible:map(
 		      Possible,
 		      fun (Digit) ->
-			      solve(place(Positions, NextPosition, Digit))
+			      solve(place(Positions, MinPosition, Digit))
 		      end)
 	    end
     end.
