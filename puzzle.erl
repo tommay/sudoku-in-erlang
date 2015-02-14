@@ -27,23 +27,3 @@ maybe_place_one_forced(Puzzle = {puzzle, _}) ->
 
 maybe_eliminate_with_tricky_sets(_Puzzle = {puzzle, nyi}) ->
     false.
-
-create_positions(Setup) ->
-    Digits = lists:map(
-	       fun (Char) ->
-		       case Char of
-			   45 ->
-			       undefined;
-			   _ ->
-			       Char - 48
-		       end
-	       end,
-	       Setup),
-    Seq = lists:seq(0, 80),
-    Zipped = lists:zip(Seq, Setup),
-    lists:map(
-      fun ({N, Digit}) ->
-	      position:new(N, Digit)
-      end,
-      Zipped).
-
