@@ -43,7 +43,7 @@ maybe_eliminate_with_tricky_sets(_Puzzle = {puzzle, nyi}) ->
 	    {solved, Positions};
 	false ->
 	    Possible = object.get(NextPosition, possibile),
-	    case sets.size(Possible)) of
+	    case possible:size(Possible) of
 		0 ->
 		    % Failed.  No solution to return.
 		    % puts "Backing out."
@@ -53,7 +53,8 @@ maybe_eliminate_with_tricky_sets(_Puzzle = {puzzle, nyi}) ->
 		    % Place it and iterate by calling solve recursively.
 		    % puts "placing forced #{next_position.possible.first} in position #{next_position.number}"
 		    % print_puzzle
-		    solve(positions:place(NextPosition, Possible.first));
+		    solve(positions:place(Positions, NextPosition,
+					  possible:first(Possible));
 		_ ->
 		    % Found an unplaced position with multiple
 		    % possibilities.  Guess each possibility
