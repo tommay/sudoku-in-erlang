@@ -1,10 +1,10 @@
 -module(spud).
 -export([maybe_update_one/2, or_else/2, do_while/2]).
 
-% Some handy utility functions.
+%% Some handy utility functions.
 
-% Strip the type off and just deal with the List, then add the Type back.
-%
+%% Strip the type off and just deal with the List, then add the Type back.
+%%
 maybe_update_one(Data = {Type, List}, MaybeUpdateFunc) ->
     case maybe_update_one(List, MaybeUpdateFunc) of
 	{ok, NewList, ChangedElement} ->
@@ -19,7 +19,7 @@ maybe_update_one(List = [], _MaybeUpdateFunc) ->
 maybe_update_one(List = [First|Rest], MaybeUpdateFunc) ->
     case MaybeUpdateFunc(First) of
 	{ok, UpdatedElement} ->
-	    % Once we've updated one element, leave the rest as-is.
+	    %% Once we've updated one element, leave the rest as-is.
 	    {ok, [UpdatedElement | Rest], UpdatedElement};
 	_ ->
 	    case maybe_update_one(Rest, MaybeUpdateFunc) of
@@ -30,9 +30,9 @@ maybe_update_one(List = [First|Rest], MaybeUpdateFunc) ->
 	    end
     end.
 
-% Call Funcs on Object in turn until one of them succeeds or they all
-% fail.  Retuns {ok. NewObject} or {not_updated, Object}.
-%
+%% Call Funcs on Object in turn until one of them succeeds or they all
+%% fail.  Retuns {ok. NewObject} or {not_updated, Object}.
+%%
 or_else(Object = {_Type, _}, _MaybeFuncs = []) ->
     {not_updated, Object};
 or_else(Object = {_Type, _}, [MaybeFunc|Rest]) ->

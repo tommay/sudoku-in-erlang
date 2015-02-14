@@ -1,7 +1,7 @@
 -module(possible).
 -export([new/0, remove/2, size/1, first/1, map/2]).
 
-% An object that maintains the possible digits for a position.
+%% An object that maintains the possible digits for a position.
 
 new() ->
     {possible, sets:from_list(lists:seq(0, 8))}.

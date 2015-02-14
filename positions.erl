@@ -44,13 +44,13 @@ place(_Positions = {positions, List}, AtPosition, Digit) ->
        end || P <- List]},
     do_exclusions(NewPositions, PlacedPosition).
 
-% Returns {ok, NewPositions} if successful.
-%
+%% Returns {ok, NewPositions} if successful.
+%%
 maybe_update_one_forced(Positions = {positions, _}) ->
     maybe_update_one(Positions, fun position:maybe_place_forced/1).
 
-% Returns {ok, NewPositions} if successful.
-%
+%% Returns {ok, NewPositions} if successful.
+%%
 maybe_update_one(Positions = {positions, _}, MaybeUpdateFunc) ->
     case spud:maybe_update_one(Positions, MaybeUpdateFunc) of
 	{ok, NewPositions, ChangedPosition} ->
@@ -59,8 +59,8 @@ maybe_update_one(Positions = {positions, _}, MaybeUpdateFunc) ->
 	    Result
     end.
 
-% Returns NewPositions.
-%
+%% Returns NewPositions.
+%%
 do_exclusions({positions, List}, ChangedPosition = {position, _}) ->
     Digit = position:get_placed(ChangedPosition),
     {
@@ -78,29 +78,29 @@ do_exclusions({positions, List}, ChangedPosition = {position, _}) ->
     }.
 
 solve(Positions = {positions, _}) ->
-    % We get here either because we're done, we've failed, or we have
-    % to guess and recurse.  We can distinguish by examining the
-    % position with the fewest possibilities remaining.
+    %% We get here either because we're done, we've failed, or we have
+    %% to guess and recurse.  We can distinguish by examining the
+    %% position with the fewest possibilities remaining.
 
     MinPosition = min_by_possible(Positions),
 
     case position:get_placed(MinPosition) == undefined of
 	false ->
-            % Solved.  Return Positions as a solution.
-	    % puts "Solved:"
-	    % print_puzzle
+            %% Solved.  Return Positions as a solution.
+	    %% puts "Solved:"
+	    %% print_puzzle
 	    {solved, Positions};
 	true ->
 	    Possible = position:get_possible(MinPosition),
 	    case possible:size(Possible) of
 		0 ->
-		    % Failed.  No solution to return.
-		    % puts "Backing out."
+		    %% Failed.  No solution to return.
+		    %% puts "Backing out."
 		    {failed};
 		_ ->
-		    % Found an unplaced position with one or more
-		    % possibilities.  Guess each possibility
-		    % recursively, and return any solutions we find.
+		    %% Found an unplaced position with one or more
+		    %% possibilities.  Guess each possibility
+		    %% recursively, and return any solutions we find.
 		    possible:map(
 		      Possible,
 		      fun (Digit) ->

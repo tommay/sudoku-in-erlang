@@ -17,8 +17,8 @@ is_excluded_by(Position = {position, _}, Other = {position, _}) ->
 	 object:get(Position, col) == object:get(Other, col) orelse
 	 object:get(Position, square) == object:get(Other, square)).
 
-% Returns NewPosition.
-%
+%% Returns NewPosition.
+%%
 not_possible(Position = {position, _}, Digit) ->
     object:update(
       Position, possible,
@@ -26,8 +26,8 @@ not_possible(Position = {position, _}, Digit) ->
 	      possible:remove(Possible, Digit)
       end).
 
-% Returns {ok, NewPosition} if successful.
-%
+%% Returns {ok, NewPosition} if successful.
+%%
 maybe_place_forced(Position = {position, _}) ->
     Possible = object:get(Position, possible),
     object:maybe_update(
@@ -36,8 +36,8 @@ maybe_place_forced(Position = {position, _}) ->
 	      case Placed == undefined andalso possible:size(Possible) == 1 of
 		  true ->
 		      Forced = possible:first(Possible),
-		      % XXX Set possible to set with just Forced if update
-		      % says we updated?
+		      %% XXX Set possible to set with just Forced if update
+		      %% says we updated?
 		      {ok, Forced};
 		  false ->
 		      not_updated
