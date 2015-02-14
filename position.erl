@@ -1,5 +1,6 @@
 -module(position).
 -export([new/1, is_excluded_by/2, not_possible/2, maybe_place_forced/1]).
+-export([get_possible/1, get_placed/1, get_number/1]).
 
 new(Number) ->
     Row = Number div 9,
@@ -11,9 +12,9 @@ new(Number) ->
        {possible, possible:new()}, placed]).
 
 is_excluded_by(Position = {position, _}, Other = {position, _}) ->
-    object:get(Position, number) /= object:get(Other, number) and
-	(object:get(Position, row) == object:get(Other, row) or
-	 object:get(Position, col) == object:get(Other, col) or
+    object:get(Position, number) /= object:get(Other, number) andalso
+	(object:get(Position, row) == object:get(Other, row) orelse
+	 object:get(Position, col) == object:get(Other, col) orelse
 	 object:get(Position, square) == object:get(Other, square)).
 
 % Returns NewPosition.
@@ -32,10 +33,8 @@ maybe_place_forced(Position = {position, _}) ->
     object:maybe_update(
       Position, placed,
       fun (Placed) ->
-	      case Placed == undefined and possible:size(Possible) == 1 of
+	      case Placed == undefined andalso possible:size(Possible) == 1 of
 		  true ->
-		      io.format("placing forced #{position.possible.first} in position #{position.number}"),
-		      print_puzzle,
 		      Forced = possible:first(Possible),
 		      % XXX Set possible to set with just Forced if update
 		      % says we updated?

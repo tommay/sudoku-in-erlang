@@ -1,5 +1,5 @@
 -module(positions).
--export([new/1, maybe_update_one_forced/1]).
+-export([new/1, solve/1, min_by_possible/1, maybe_update_one_forced/1]).
 
 new(Setup) ->
     Digits = to_digits(Setup),
@@ -33,12 +33,12 @@ to_digits(Setup) ->
       end,
       Setup).
 
-place(Positions = {positions, List}, AtPosition, Digit) ->
+place(_Positions = {positions, List}, AtPosition, Digit) ->
     PlacedPosition = object:set(AtPosition, placed, Digit),
     Number = position:get_number(PlacedPosition),
     NewPositions = {
       positions,
-      [case object.get(P, number) == Number of
+      [case position:get_numer(P) == Number of
 	   true -> PlacedPosition;
 	   false -> P
        end || P <- List]},
@@ -59,8 +59,8 @@ maybe_update_one(Positions = {positions, _}, MaybeUpdateFunc) ->
 	    Result
     end.
 
-# Returns NewPositions.
-#
+% Returns NewPositions.
+%
 do_exclusions({positions, List}, ChangedPosition = {position, _}) ->
     Digit = position:get_placed(ChangedPosition),
     {
@@ -77,7 +77,7 @@ do_exclusions({positions, List}, ChangedPosition = {position, _}) ->
 	List)
     }.
 
--solve(Positions = {positions, _}) ->
+solve(Positions = {positions, _}) ->
     % We get here either because we're done, we've failed, or we have
     % to guess and recurse.  We can distinguish by examining the
     % position with the fewest possibilities remaining.
@@ -109,7 +109,7 @@ do_exclusions({positions, List}, ChangedPosition = {position, _}) ->
 	    end
     end.
 
--min_by_possible({positions, List}) ->
+min_by_possible({positions, List}) ->
     ByPossible =
 	lists:map(
 	  fun (Position = {position, _}) ->

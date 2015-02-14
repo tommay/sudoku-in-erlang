@@ -1,5 +1,5 @@
 -module(spud).
--export([maybe_update_one/2, or_else/3, do_while/3, length/1]).
+-export([maybe_update_one/2, or_else/2, do_while/2]).
 
 % Some handy utility functions.
 
@@ -11,12 +11,12 @@ maybe_update_one(Data = {Type, List}, MaybeUpdateFunc) ->
 	    {ok, {Type, NewList}, ChangedElement};
 	_ ->
 	    {not_updated, Data}
-    end.
+    end;
 
 maybe_update_one(List = [], _MaybeUpdateFunc) ->
     {not_updated, List};
 
-maybe_update_one(List = [First|Rest]}, MaybeUpdateFunc) ->
+maybe_update_one(List = [First|Rest], MaybeUpdateFunc) ->
     case MaybeUpdateFunc(First) of
 	{ok, UpdatedElement} ->
 	    % Once we've updated one element, leave the rest as-is.
@@ -43,15 +43,11 @@ or_else(Object = {_Type, _}, [MaybeFunc|Rest]) ->
 	    or_else(Object, Rest)
     end.
 
-do_while(Object = {_Type, _}, MaybeFunc) ->
+do_while(Object = {_Type, _}, MaybeFunc)
+  when is_atom(_Type) and is_function(MaybeFunc) ->
     case MaybeFunc(Object) of
 	{ok, NewObject} ->
-	    do_while(NewObject, Func);
+	    do_while(NewObject, MaybeFunc);
 	Result = _ ->
 	    Result
     end.
-
-length([]) ->
-    0;
-length([_|T]) ->
-    lists:foldl(fun (_, A) -> A + 1 end, 1, T).
