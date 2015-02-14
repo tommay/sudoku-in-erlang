@@ -14,7 +14,7 @@ new(Setup) ->
 		    undefined ->
 			Accum;
 		    _ ->
-			place(accum, Position, Digit)
+			place(Accum, Position, Digit)
 		end
 	end,
 	Positions,
