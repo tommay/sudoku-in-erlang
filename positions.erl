@@ -33,8 +33,8 @@ to_digits(Setup) ->
       end,
       Setup).
 
-place(Positions = {positions, List}, Position, Digit) ->
-    PlacedPosition = object:set(Position, placed, Digit),
+place(Positions = {positions, List}, AtPosition, Digit) ->
+    PlacedPosition = object:set(AtPosition, placed, Digit),
     Number = object:get(PlacedPosition, number),
     NewPositions = {
       positions,
@@ -76,3 +76,35 @@ do_exclusions({positions, List}, ChangedPosition = {position, _}) ->
 	end,
 	List)
     }.
+
+-solve(Positions = {positions, _}) ->
+    % We get here either because we're done, we've failed, or we have
+    % to guess and recurse.  We can distinguish by examining the
+    % position with the fewest possibilities remaining.
+
+    NextPosition = min_by_possible(Positions),
+
+    case object:get(NextPosition, placed) == undefined of
+	false ->
+            % Solved.  Return Positions as a solution.
+	    % puts "Solved:"
+	    % print_puzzle
+	    {solved, Positions};
+	true ->
+	    Possible = object.get(NextPosition, possibile),
+	    case possible:size(Possible) of
+		0 ->
+		    % Failed.  No solution to return.
+		    % puts "Backing out."
+		    {failed};
+		_ ->
+		    % Found an unplaced position with one or more
+		    % possibilities.  Guess each possibility
+		    % recursively, and return any solutions we find.
+		    possible:map(
+		      Possible,
+		      fun (Digit) ->
+			      solve(place(Positions, NextPosition, Digit))
+		      end)
+	    end
+    end.

@@ -14,3 +14,7 @@ size({possible, Set}) ->
 
 first({possible, Set}) ->
     hd(sets:to_list(Set)).
+
+map({possible, Set}, Func) ->
+    List = sets:to_list(Set),
+    lists:map(Func, List).
