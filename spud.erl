@@ -1,5 +1,5 @@
 -module(spud).
--export([maybe_update_one/2, or_else/2, do_while/2]).
+-export([maybe_update_one/2, or_else/2, do_while/2, min_by/2]).
 
 %% Some handy utility functions.
 

@@ -4,7 +4,7 @@
 new(Setup) ->
     object:new(
       puzzle,
-      [{positions, positions:new(Setup)}].
+      [{positions, positions:new(Setup)}]).
 
 solve(Puzzle = {puzzle, _}) ->
     spud:do_while(Puzzle, fun maybe_place_or_eliminate/1).
@@ -18,8 +18,8 @@ maybe_place_or_eliminate(Puzzle = {puzzle, _}) ->
 maybe_place_one_missing(_Puzzle = {puzzle, nyi}) ->
     false.
 
-# Returns {ok, NewPuzzle} or {not_updated, Puzzle}.
-#
+%% Returns {ok, NewPuzzle} or {not_updated, Puzzle}.
+%%
 maybe_place_one_forced(Puzzle = {puzzle, _}) ->
     object:maybe_update(
       Puzzle, positions,

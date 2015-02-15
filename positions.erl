@@ -44,7 +44,8 @@ place(Positions = {positions, _}, AtPosition, Digit) ->
 		     false ->
 			 Position
 		 end
-	 end || Position <- List]).
+	 end || Position <- List]
+      end).
 
 %% Returns {ok, NewPositions} if successful.
 %%
