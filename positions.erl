@@ -29,16 +29,22 @@ to_digits(Setup) ->
 	     Char - 48
      end || Char <- Setup].
 
-place(_Positions = {positions, List}, AtPosition, Digit) ->
-    PlacedPosition = object:set(AtPosition, placed, Digit),
-    Number = position:get_number(PlacedPosition),
-    NewPositions = {
-      positions,
-      [case position:get_numer(P) == Number of
-	   true -> PlacedPosition;
-	   false -> P
-       end || P <- List]},
-    do_exclusions(NewPositions, PlacedPosition).
+place(Positions = {positions, _}, AtPosition, Digit) ->
+    object:update(
+      Positions, list,
+      fun (List) ->
+        [case Position == AtPosition of
+	     %% XXX set possible to just Digit?
+	     true ->
+		 object:set(Position, placed, Digit);
+	     false -> 
+		 case position:is_excluded_by(Position, AtPosition) of
+		     true ->
+			 position:not_possibile(Position, Digit);
+		     false ->
+			 Position
+		 end
+	 end || Position <- List]).
 
 %% Returns {ok, NewPositions} if successful.
 %%
@@ -56,6 +62,8 @@ maybe_update_one(Positions = {positions, _}, MaybeUpdateFunc) ->
     end.
 
 %% Returns NewPositions.
+%% XXX This hopefully won't be needed now that place() updates
+%% possibilities.
 %%
 do_exclusions({positions, List}, ChangedPosition = {position, _}) ->
     Digit = position:get_placed(ChangedPosition),
