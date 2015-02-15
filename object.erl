@@ -13,22 +13,21 @@
 new(Type) when is_atom(Type)->
     {Type, dict:new()}.
 
-new(Type, Attributes) when is_atom(Type) ->
-    {Type,
-     lists:foldl(
-       fun ({Attribute, Value}, Object) ->
-	       set(Object, Attribute, Value);
-	   (Attribute, Object) ->
-	       set(Object, Attribute, undefined)
-       end,
-       new(Type),
-       Attributes)}.
+new(Type, Attributes) when is_atom(Type), is_list(Attributes) ->
+    lists:foldl(
+      fun ({Attribute, Value}, Object) ->
+	      set(Object, Attribute, Value);
+	  (Attribute, Object) ->
+	      set(Object, Attribute, undefined)
+      end,
+      new(Type),
+      Attributes).
 
 get({Type, Dict}, Attribute) when is_atom(Type), is_atom(Attribute) ->
     dict:fetch(Attribute, Dict).
 
 set({Type, Dict}, Attribute, Value) when is_atom(Type), is_atom(Attribute) ->
-    {Type, dict:update(Attribute, Dict, Value)}.
+    {Type, dict:store(Attribute, Value, Dict)}.
 
 %% MaybeUpdateFunc(Value) takes the attribute's current Value and
 %% returns {ok, NewValue} if the attribute should be updated, or
@@ -49,5 +48,5 @@ maybe_update(Object = {Type, _}, Attribute, MaybeUpdateFunc)
 
 %% Returns NewObject.
 %%
-update(Object = {_Type, _}, Attribute, UpdateFunc) ->
-    set(Object, Attribute, UpdateFunc(get(Object, Attribute))).
+update({_Type, Dict}, Attribute, UpdateFunc) ->
+    dict:update(Attribute, UpdateFunc, Dict).
