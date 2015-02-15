@@ -24,15 +24,11 @@ new(Type, Attributes) when is_atom(Type) ->
        new(Type),
        Attributes)}.
 
-get({Type, Dict}, Attribute) when is_atom(Type) and is_atom(Attribute) ->
-    case dict:is_dict(Dict) of
-	true -> dict:fetch(Attribute, Dict)
-    end.
+get({Type, Dict}, Attribute) when is_atom(Type), is_atom(Attribute) ->
+    dict:fetch(Attribute, Dict).
 
-set({Type, Dict}, Attribute, Value) when is_atom(Type) and is_atom(Attribute) ->
-    case dict:is_dict(Dict) of
-	true -> {Type, dict:update(Attribute, Dict, Value)}
-    end.
+set({Type, Dict}, Attribute, Value) when is_atom(Type), is_atom(Attribute) ->
+    {Type, dict:update(Attribute, Dict, Value)}.
 
 %% MaybeUpdateFunc(Value) takes the attribute's current Value and
 %% returns {ok, NewValue} if the attribute should be updated, or
@@ -42,7 +38,7 @@ set({Type, Dict}, Attribute, Value) when is_atom(Type) and is_atom(Attribute) ->
 %% updated, otherwise {not_updated, Object}.
 %%
 maybe_update(Object = {Type, _}, Attribute, MaybeUpdateFunc)
-  when is_atom(Type) and is_atom(Attribute) and is_function(MaybeUpdateFunc) ->
+  when is_atom(Type), is_atom(Attribute), is_function(MaybeUpdateFunc) ->
     Value = get(Object, Attribute),
     case MaybeUpdateFunc(Value) of
 	{ok, NewValue} ->

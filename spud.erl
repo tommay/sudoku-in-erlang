@@ -44,7 +44,7 @@ or_else(Object = {_Type, _}, [MaybeFunc|Rest]) ->
     end.
 
 do_while(Object = {_Type, _}, MaybeFunc)
-  when is_atom(_Type) and is_function(MaybeFunc) ->
+  when is_atom(_Type), is_function(MaybeFunc) ->
     case MaybeFunc(Object) of
 	{ok, NewObject} ->
 	    do_while(NewObject, MaybeFunc);
