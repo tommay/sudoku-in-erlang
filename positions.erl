@@ -9,12 +9,10 @@ new(Setup) ->
     Zipped = lists:zip(Digits, List),
     lists:foldl(
       fun ({Digit, Position = {position, _}}, Accum = {positions, _}) ->
-	      io:format("digit: ~p~n", [Digit]),
 	      case Digit of
 		  undefined ->
 		      Accum;
 		  _ ->
-		      io:format("placing: ~p~n", [Digit]),
 		      place(Accum, Position, Digit)
 	      end
       end,
@@ -140,3 +138,23 @@ to_string({positions, List}) when is_list(List) ->
 	      end
       end,
       List).
+
+to_puzzle(Positions = {positions, _}) ->
+    String = to_string(Positions),
+    string:join(
+      lists:map(
+	fun (Rows) ->
+		string:join(
+		  lists:map(
+		    fun (Row) ->
+			    string:join(spud:slices(Row, 3), " ")
+		    end,
+		    spud:slices(Rows, 9)),
+		  "\n")
+	end,
+	spud:slices(String, 27)),
+      "\n\n").
+
+print_puzzle(Positions = {positions, _}) ->
+    io:format("~s~n", [to_puzzle(Positions)]).
+
