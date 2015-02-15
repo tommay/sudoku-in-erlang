@@ -1,6 +1,7 @@
 -module(position).
 -export([new/1, is_excluded_by/2, not_possible/2, maybe_place_forced/1]).
 -export([get_possible/1, get_placed/1, get_number/1]).
+-export([to_string/1]).
 
 new(Number) ->
     Row = Number div 9,
@@ -45,11 +46,15 @@ maybe_place_forced(Position = {position, _}) ->
 	      end
       end).
 
-get_possible(Position = {position, _}) ->
-    object:get(Position, possible).
+get_number(Position = {position, _}) ->
+    object:get(Position, number).
 
 get_placed(Position = {position, _}) ->
     object:get(Position, placed).
 
-get_number(Position = {position, _}) ->
-    object:get(Position, number).
+get_possible(Position = {position, _}) ->
+    object:get(Position, possible).
+
+to_string(Position = {position, _}) ->
+    spud:format("~w ~w ~s", [get_number(Position), get_placed(Position),
+			     possible:to_string(get_possible(Position))]).

@@ -88,6 +88,7 @@ solve(Positions = {positions, _}) ->
     %% position with the fewest possibilities remaining.
 
     MinPosition = min_by_possible_size(Positions),
+    io:format("MinPosition: ~s~n", [position:to_string(MinPosition)]),
 
     case position:get_placed(MinPosition) == undefined of
 	false ->

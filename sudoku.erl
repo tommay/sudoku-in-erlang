@@ -1,5 +1,9 @@
 -module(sudoku).
 -export([start/1]).
+-compile(export_all).
+
+s() ->
+    start("../puzzle3.txt").
 
 start(Filename) ->
     Setup = get_setup(Filename),
