@@ -14,7 +14,7 @@ new(Number) ->
 
 is_excluded_by(Position = {position, _}, Other = {position, _}) ->
     %% Shouldn't have to check that it's the same Position.
-    object:get(Position, number) /= object:get(Other, number) andalso
+    get_number(Position) /= get_number(Other) andalso
 	(object:get(Position, row) == object:get(Other, row) orelse
 	 object:get(Position, col) == object:get(Other, col) orelse
 	 object:get(Position, square) == object:get(Other, square)).

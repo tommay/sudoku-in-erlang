@@ -8,6 +8,7 @@ s() ->
 start(Filename) ->
     Setup = get_setup(Filename),
     Positions = positions:new(Setup),
+    io:format("positions: ~s~n", [positions:to_string(Positions)]),
     positions:solve(Positions).
 
 get_setup(Filename) ->

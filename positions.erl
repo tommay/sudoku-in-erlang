@@ -30,11 +30,11 @@ to_digits(Setup) ->
      end || Char <- Setup].
 
 place({positions, List}, AtPosition, Digit) ->
-    io:format("in place digit: ~p~n", [Digit]),
+    AtNumber = position:get_number(AtPosition),
     {
       positions,
-      [case Position == AtPosition of
-	   %% XXX set possible to just Digit?
+      [case position:get_number(Position) == AtNumber of
+	   %% XXX set possible to just Digit?  Or undefined?
 	   true ->
 	       object:set(Position, placed, Digit);
 	   false ->
@@ -85,7 +85,7 @@ do_exclusions({positions, List}, ChangedPosition = {position, _}) ->
 solve(Positions = {positions, _}) ->
     %% We get here either because we're done, we've failed, or we have
     %% to guess and recurse.  We can distinguish by examining the
-    %% position with the fewest possibilities remaining.
+    %% unplaced position with the fewest possibilities remaining.
 
     MinPosition = min_by_possible_size(Positions),
     io:format("MinPosition: ~s~n", [position:to_string(MinPosition)]),
@@ -119,6 +119,24 @@ min_by_possible_size({positions, List}) when is_list(List) ->
     spud:min_by(
       List,
       fun (Position = {position, _}) ->
-	      Possible = position:get_possible(Position),
-	      possible:size(Possible)
+	      %% Sort placed positions to the end.
+	      case position:get_placed(Position) of
+		  undefined ->
+		      Possible = position:get_possible(Position),
+		      possible:size(Possible);
+		  _ ->
+ 		      10
+	      end
       end).
+
+to_string({positions, List}) when is_list(List) ->
+    lists:map(
+      fun (Position = {position, _}) ->
+	      case position:get_placed(Position) of
+		  undefined ->
+		      45;
+		  Digit = _ ->
+		      Digit + 48
+	      end
+      end,
+      List).

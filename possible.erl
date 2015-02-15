@@ -5,7 +5,7 @@
 %% An object that maintains the possible digits for a position.
 
 new() ->
-    {possible, sets:from_list(lists:seq(0, 8))}.
+    {possible, sets:from_list(lists:seq(1, 9))}.
 
 remove({possible, Set}, Digit) ->
     {possible, sets:del_element(Digit, Set)}.
