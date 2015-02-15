@@ -9,7 +9,7 @@ new(Setup) ->
     {
       positions,
       lists:foldl(
-	fun ({Digit, Position a= {position, _}}, Accum) ->
+	fun ({Digit, Position = {position, _}}, Accum) ->
 		case Digit of
 		    undefined ->
 			Accum;
@@ -22,16 +22,12 @@ new(Setup) ->
       }.
 
 to_digits(Setup) ->
-    lists:map(
-      fun (Char) ->
-	      case Char of
-		  45 ->
-		      undefined;
-		  _ ->
-		      Char - 48
-	      end
-      end,
-      Setup).
+    [case Char of
+	 45 ->
+	     undefined;
+	 _ ->
+	     Char - 48
+     end || Char <- Setup].
 
 place(_Positions = {positions, List}, AtPosition, Digit) ->
     PlacedPosition = object:set(AtPosition, placed, Digit),
@@ -116,6 +112,3 @@ min_by_possible_size({positions, List}) ->
 	      Possible = position:get_possible(Position),
 	      possible:size(Possible)
       end).
-
-      
-
