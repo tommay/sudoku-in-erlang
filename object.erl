@@ -48,5 +48,5 @@ maybe_update(Object = {Type, _}, Attribute, MaybeUpdateFunc)
 
 %% Returns NewObject.
 %%
-update({_Type, Dict}, Attribute, UpdateFunc) ->
-    dict:update(Attribute, UpdateFunc, Dict).
+update({Type, Dict}, Attribute, UpdateFunc) ->
+    {Type, dict:update(Attribute, UpdateFunc, Dict)}.

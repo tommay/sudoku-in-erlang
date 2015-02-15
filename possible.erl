@@ -7,7 +7,7 @@ new() ->
     {possible, sets:from_list(lists:seq(0, 8))}.
 
 remove({possible, Set}, Digit) ->
-    {possible, sets:del_element(Set, Digit)}.
+    {possible, sets:del_element(Digit, Set)}.
 
 size({possible, Set}) ->
     sets:size(Set).

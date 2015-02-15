@@ -1,25 +1,25 @@
 -module(positions).
 -export([new/1, solve/1]).
+-compile(export_all).
 
 new(Setup) ->
     List = [position:new(N) || N <- lists:seq(0, 80)],
     Positions = {positions, List},
     Digits = to_digits(Setup),
-    Zipped = lists:zip(List, Digits),
-    {
-      positions,
-      lists:foldl(
-	fun ({Digit, Position = {position, _}}, Accum) ->
-		case Digit of
-		    undefined ->
-			Accum;
-		    _ ->
-			place(Accum, Position, Digit)
-		end
-	end,
-	Positions,
-	Zipped)
-      }.
+    Zipped = lists:zip(Digits, List),
+    lists:foldl(
+      fun ({Digit, Position = {position, _}}, Accum = {positions, _}) ->
+	      io:format("digit: ~p~n", [Digit]),
+	      case Digit of
+		  undefined ->
+		      Accum;
+		  _ ->
+		      io:format("placing: ~p~n", [Digit]),
+		      place(Accum, Position, Digit)
+	      end
+      end,
+      Positions,
+      Zipped).
 
 to_digits(Setup) ->
     [case Char of
@@ -29,23 +29,23 @@ to_digits(Setup) ->
 	     Char - 48
      end || Char <- Setup].
 
-place(Positions = {positions, _}, AtPosition, Digit) ->
-    object:update(
-      Positions, list,
-      fun (List) ->
-        [case Position == AtPosition of
-	     %% XXX set possible to just Digit?
-	     true ->
-		 object:set(Position, placed, Digit);
-	     false -> 
-		 case position:is_excluded_by(Position, AtPosition) of
-		     true ->
-			 position:not_possibile(Position, Digit);
-		     false ->
-			 Position
-		 end
-	 end || Position <- List]
-      end).
+place({positions, List}, AtPosition, Digit) ->
+    io:format("in place digit: ~p~n", [Digit]),
+    {
+      positions,
+      [case Position == AtPosition of
+	   %% XXX set possible to just Digit?
+	   true ->
+	       object:set(Position, placed, Digit);
+	   false ->
+	       case position:is_excluded_by(Position, AtPosition) of
+		   true ->
+		       position:not_possible(Position, Digit);
+		   false ->
+		       Position
+	       end
+       end || Position <- List]
+    }.
 
 %% Returns {ok, NewPositions} if successful.
 %%
@@ -114,7 +114,7 @@ solve(Positions = {positions, _}) ->
 	    end
     end.
 
-min_by_possible_size({positions, List}) ->
+min_by_possible_size({positions, List}) when is_list(List) ->
     spud:min_by(
       List,
       fun (Position = {position, _}) ->
