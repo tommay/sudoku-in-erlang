@@ -51,3 +51,12 @@ do_while(Object = {_Type, _}, MaybeFunc)
 	Result = _ ->
 	    Result
     end.
+
+%% Returns the element of List with the minimum value computed by Func.
+%%
+min_by(List, Func) when is_list(List), is_function(Func) ->
+    %% This creates an entire new list.  Could use foldl to avoid that
+    %% and just remember the min on the fly.  But this is simple.
+    Tuples = [{Func(Element), Element} || Element <- List],
+    {_, MinElement} = lists:min(Tuples),
+    MinElement.

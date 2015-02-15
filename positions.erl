@@ -1,5 +1,5 @@
 -module(positions).
--export([new/1, solve/1, min_by_possible/1, maybe_update_one_forced/1]).
+-export([new/1, solve/1]).
 
 new(Setup) ->
     List = [position:new(N) || N <- lists:seq(0, 80)],
@@ -82,7 +82,7 @@ solve(Positions = {positions, _}) ->
     %% to guess and recurse.  We can distinguish by examining the
     %% position with the fewest possibilities remaining.
 
-    MinPosition = min_by_possible(Positions),
+    MinPosition = min_by_possible_size(Positions),
 
     case position:get_placed(MinPosition) == undefined of
 	false ->
@@ -109,14 +109,13 @@ solve(Positions = {positions, _}) ->
 	    end
     end.
 
-min_by_possible({positions, List}) ->
-    ByPossible =
-	lists:map(
-	  fun (Position = {position, _}) ->
-		  Possible = position:get_possible(Position),
-		  Size = possible:size(Possible),
-		  {Size, Position}
-	  end,
-	  List),
-    {_, MinPosition} = lists:min(ByPossible),
-    MinPosition.
+min_by_possible_size({positions, List}) ->
+    spud:min_by(
+      List,
+      fun (Position = {position, _}) ->
+	      Possible = position:get_possible(Position),
+	      possible:size(Possible)
+      end).
+
+      
+
