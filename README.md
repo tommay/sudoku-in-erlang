@@ -12,19 +12,24 @@ the law of Demeter is right out.  So it should be a good influence on
 my designs in other languages.  At least I've been a fan of
 immutability for decades
 
-This is total work-in-progress and doesn't work yet.  It's not clear
-whether I'll be sticking with some of my design approaches.  It's also
-strictly functional with no actors or concurrency.  I'll play with
-those later, probably when I add statistics of the various tachniques.
+This finally works!  I made an escript executable that takes a filename
+and prints any solutions.
+
+It's not clear whether I'll be sticking with some of my design
+approaches.  It's also strictly functional with no actors or
+concurrency.  I'll play with those later, probably when I add
+statistics of the various tachniques.
 
 I've gotten quite comfortable with the pattern matching and like it a
 lot.  If we get this, do that.  If we get something else, do the other
-thing.  Give this piece a name so we can use it later.
+thing.  Give this piece of the arguments a name so we can use it
+later.
 
 Somtimes it still feels weird to be writing functions that "don't do
-anything"; they just look at their arguments and return some new junk.
-It's like telling a dog to walk across the room, but instead of
-actually walking across the room it creates a new dog that's on the
-other side of the room and you use that one instead.  And you still
-have the old dog on your side of the room, until you ignore it long
-enough and the garbage collector cleans it up.
+anything"; they just look at their arguments and return some new junk,
+often a slightly modified copy of itself.  It's like telling a dog to
+walk across the room, but instead of actually walking across the room
+it creates a new dog that's on the other side of the room and you use
+that dog instead.  And you still have the old dog on your side of the
+room, until you ignore it long enough and the garbage collector cleans
+it up.
