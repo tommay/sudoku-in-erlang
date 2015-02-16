@@ -66,14 +66,12 @@ solve(Puzzle = {puzzle, _}) ->
     case position:get_placed(MinPosition) == undefined of
 	false ->
             %% Solved.  Return Puzzle as a solution.
-	    spud:debug("Solved:~n~s~n~n", [to_puzzle(Puzzle)]),
 	    [Puzzle];
 	true ->
 	    Possible = position:get_possible(MinPosition),
 	    case possible:size(Possible) of
 		0 ->
-		    %% Failed.  No solution to return.
-		    spud:debug("Backing out."),
+		    %% Failed.  Return no solutions.
 		    [];
 		_ ->
 		    %% Found an unplaced position with one or more
