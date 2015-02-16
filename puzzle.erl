@@ -42,7 +42,7 @@ place({puzzle, List}, AtPosition, Digit) ->
       puzzle,
       [case position:get_number(Position) == AtNumber of
 	   true ->
-	       object:set(Position, placed, Digit);
+	       position:place(Position, Digit);
 	   false ->
 	       case position:is_excluded_by(Position, AtPosition) of
 		   true ->

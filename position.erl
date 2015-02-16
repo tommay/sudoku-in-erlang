@@ -1,5 +1,5 @@
 -module(position).
--export([new/1, get_number/1, get_possible/1, get_placed/1]).
+-export([new/1, get_number/1, get_possible/1, place/2, get_placed/1]).
 -export([is_excluded_by/2, not_possible/2]).
 -export([to_string/1]).
 
@@ -24,6 +24,9 @@ get_number(Position = {position, _}) ->
 
 get_possible(Position = {position, _}) ->
     object:get(Position, possible).
+
+place(Position = {position, _}, Digit) ->
+    object:set(Position, placed, Digit).
 
 get_placed(Position = {position, _}) ->
     object:get(Position, placed).
