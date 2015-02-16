@@ -20,14 +20,8 @@ new(Type) when is_atom(Type)->
 %% new object with.
 %%
 new(Type, Attributes) when is_atom(Type), is_list(Attributes) ->
-    lists:foldl(
-      fun ({Attribute, Value}, Object) ->
-	      set(Object, Attribute, Value);
-	  (Attribute, Object) ->
-	      set(Object, Attribute, undefined)
-      end,
-      new(Type),
-      Attributes).
+    NewObject = new(Type),
+    set(NewObject, Attributes).
 
 %% Returns the Value of the Attribute.
 %%
@@ -39,6 +33,19 @@ get({Type, Dict}, Attribute) when is_atom(Type), is_atom(Attribute) ->
 set(_Object = {Type, Dict}, Attribute, Value)
   when is_atom(Type), is_atom(Attribute) ->
     {Type, dict:store(Attribute, Value, Dict)}.
+
+%% Returns NewObject, with the list of {Attribute, Value} set.
+%%
+set(Object = {Type, _Dict}, []) when is_atom(Type) ->
+    Object;
+set(Object = {Type, _Dict}, [{Attribute, Value} | T])
+  when is_atom(Type), is_atom(Attribute) ->
+    NewObject = set(Object, Attribute, Value),
+    set(NewObject, T);
+set(Object = {Type, _Dict}, [Attribute | T])
+  when is_atom(Type), is_atom(Attribute) ->
+    NewObject = set(Object, Attribute, undefined),
+    set(NewObject, T).
 
 %% Returns NewObject.
 %%
