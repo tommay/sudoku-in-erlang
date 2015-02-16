@@ -1,17 +1,17 @@
--module(positions).
+-module(puzzle).
 -export([new/1, solve/1, print_puzzle/1]).
 
-%% Returns a new Positions object, which contains a list of positions.
-%% Setup is a string of 81 digits or dashes used to initialize the digit
-%% placed in each Position.
+%% Returns a new Puzzle object which contains a list of Positions.
+%% Setup is a string of 81 digits or dashes used to initialize the
+%% digit placed in each Position.
 %%
 new(Setup) ->
     List = [position:new(N) || N <- lists:seq(0, 80)],
-    Positions = {positions, List},
+    Puzzle = {puzzle, List},
     Digits = to_digits(Setup),
     Zipped = lists:zip(Digits, List),
     lists:foldl(
-      fun ({Digit, Position = {position, _}}, Accum = {positions, _}) ->
+      fun ({Digit, Position = {position, _}}, Accum = {puzzle, _}) ->
 	      case Digit of
 		  undefined ->
 		      Accum;
@@ -19,7 +19,7 @@ new(Setup) ->
 		      place(Accum, Position, Digit)
 	      end
       end,
-      Positions,
+      Puzzle,
       Zipped).
 
 %% Given a Setup string, returns a list of numbers or undefined for
@@ -33,13 +33,13 @@ to_digits(Setup) ->
 	     Char - 48
      end || Char <- Setup].
 
-%% Retuns new Positions with Digit placed in AtPosition.  The possible
+%% Retuns new Puzzle with Digit placed in AtPosition.  The possible
 %% sets of all Positions are updated to account for the new placement.
 %%
-place({positions, List}, AtPosition, Digit) ->
+place({puzzle, List}, AtPosition, Digit) ->
     AtNumber = position:get_number(AtPosition),
     {
-      positions,
+      puzzle,
       [case position:get_number(Position) == AtNumber of
 	   true ->
 	       object:set(Position, placed, Digit);
@@ -53,21 +53,21 @@ place({positions, List}, AtPosition, Digit) ->
        end || Position <- List]
     }.
 
-%% Returns a possible empty list of solved Positions starting from
-%% this Positions.
+%% Returns a possible empty list of solved Puzzles starting from this
+%% Puzzle.
 %%
-solve(Positions = {positions, _}) ->
+solve(Puzzle = {puzzle, _}) ->
     %% We get here either because we're done, we've failed, or we have
     %% to guess and recurse.  We can distinguish by examining the
     %% unplaced position with the fewest possibilities remaining.
 
-    MinPosition = min_by_possible_size(Positions),
+    MinPosition = min_by_possible_size(Puzzle),
 
     case position:get_placed(MinPosition) == undefined of
 	false ->
-            %% Solved.  Return Positions as a solution.
-	    spud:debug("Solved:~n~s~n~n", [to_puzzle(Positions)]),
-	    [Positions];
+            %% Solved.  Return Puzzle as a solution.
+	    spud:debug("Solved:~n~s~n~n", [to_puzzle(Puzzle)]),
+	    [Puzzle];
 	true ->
 	    Possible = position:get_possible(MinPosition),
 	    case possible:size(Possible) of
@@ -82,7 +82,7 @@ solve(Positions = {positions, _}) ->
 		    possible:flatmap(
 		      Possible,
 		      fun (Digit) ->
-			      Guess = place(Positions, MinPosition, Digit),
+			      Guess = place(Puzzle, MinPosition, Digit),
 			      solve(Guess)
 		      end)
 	    end
@@ -92,7 +92,7 @@ solve(Positions = {positions, _}) ->
 %% possibilities.  This is used to find the best Position to make a
 %% guess for to minimize the amount of guessing.
 %%
-min_by_possible_size({positions, List}) when is_list(List) ->
+min_by_possible_size({puzzle, List}) when is_list(List) ->
     spud:min_by(
       List,
       fun (Position = {position, _}) ->
@@ -108,7 +108,7 @@ min_by_possible_size({positions, List}) when is_list(List) ->
 
 %% Returns a raw string of 81 digits and dashes, like the argument to new.
 %%
-to_string({positions, List}) when is_list(List) ->
+to_string({puzzle, List}) when is_list(List) ->
     lists:map(
       fun (Position = {position, _}) ->
 	      case position:get_placed(Position) of
@@ -122,8 +122,8 @@ to_string({positions, List}) when is_list(List) ->
 
 %% Returns a string that prints out as a grid of digits.
 %%
-to_puzzle(Positions = {positions, _}) ->
-    String = to_string(Positions),
+to_puzzle(Puzzle = {puzzle, _}) ->
+    String = to_string(Puzzle),
     string:join(
       lists:map(
 	fun (Rows) ->
@@ -140,6 +140,6 @@ to_puzzle(Positions = {positions, _}) ->
 
 %% Prints the to_puzzle string.
 %%
-print_puzzle(Positions = {positions, _}) ->
-    io:format("~s~n", [to_puzzle(Positions)]).
+print_puzzle(Puzzle = {puzzle, _}) ->
+    io:format("~s~n", [to_puzzle(Puzzle)]).
 

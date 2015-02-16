@@ -16,17 +16,17 @@ main([Filename]) ->
 main(_) ->
     io:format("Usage: sudoku filename~n").
 
-%% Inializes Positions from the given Filename and prints out solutions
+%% Inializes Puzzle from the given Filename and prints out solutions
 %% if any.
 %%
 start(Filename) ->
     Setup = get_setup(Filename),
-    Positions = positions:new(Setup),
-    Solutions = positions:solve(Positions),
+    Puzzle = puzzle:new(Setup),
+    Solutions = puzzle:solve(Puzzle),
     lists:foreach(
-      fun (SolvedPositions) ->
+      fun (SolvedPuzzle) ->
 	      io:format("~n"),
-	      positions:print_puzzle(SolvedPositions),
+	      puzzle:print_puzzle(SolvedPuzzle),
 	      io:format("~n")
       end,
       Solutions),
