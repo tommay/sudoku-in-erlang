@@ -7,19 +7,18 @@
 %% https://erlangcentral.org/wiki/index.php?title=Running_Erlang_Code_From_The_Command_Line
 
 %% These two lines are optional.
+%%
 -module(sudoku).
 -export([main/1]).
 
-main([]) ->
-    usage();
 main([Filename]) ->
     start(Filename);
 main(_) ->
-    usage().
-
-usage() ->
     io:format("Usage: sudoku filename~n").
 
+%% Inializes Positions from the given Filename and prints out solutions
+%% if any.
+%%
 start(Filename) ->
     Setup = get_setup(Filename),
     Positions = positions:new(Setup),

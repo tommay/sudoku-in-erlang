@@ -1,8 +1,15 @@
 -module(position).
--export([new/1, is_excluded_by/2, not_possible/2, maybe_place_forced/1]).
--export([get_possible/1, get_placed/1, get_number/1]).
+-export([new/1, get_number/1, get_possible/1, get_placed/1]).
+-export([is_excluded_by/2, not_possible/2]).
 -export([to_string/1]).
 
+%% Returns a new Position at position Number.  Number is a number from
+%% 0 to 80 denoting where this Position is on the grid.  Figure out
+%% and remember which row, column, and square this Position is in.  A
+%% Position has set of digits it can possible contain without
+%% conflicting with other previously placed positions.  "placed"can be
+%% either undefined, or the digit that has been placed in this position.
+%%
 new(Number) ->
     Row = Number div 9,
     Col = Number rem 9,
@@ -12,6 +19,18 @@ new(Number) ->
       [{number, Number}, {row, Row}, {col, Col}, {square, Square},
        {possible, possible:new()}, placed]).
 
+get_number(Position = {position, _}) ->
+    object:get(Position, number).
+
+get_possible(Position = {position, _}) ->
+    object:get(Position, possible).
+
+get_placed(Position = {position, _}) ->
+    object:get(Position, placed).
+
+%% Returns true if Position and Other are in the same row, column, or
+%% square, else false.
+%%
 is_excluded_by(Position = {position, _}, Other = {position, _}) ->
     %% Shouldn't have to check that it's the same Position.
     get_number(Position) /= get_number(Other) andalso
@@ -19,7 +38,7 @@ is_excluded_by(Position = {position, _}, Other = {position, _}) ->
 	 object:get(Position, col) == object:get(Other, col) orelse
 	 object:get(Position, square) == object:get(Other, square)).
 
-%% Returns NewPosition.
+%% Returns NewPosition with Digit remove from the possible set.
 %%
 not_possible(Position = {position, _}, Digit) ->
     object:update(
@@ -27,33 +46,6 @@ not_possible(Position = {position, _}, Digit) ->
       fun (Possible = {possible, _}) ->
 	      possible:remove(Possible, Digit)
       end).
-
-%% Returns {ok, NewPosition} if successful.
-%%
-maybe_place_forced(Position = {position, _}) ->
-    Possible = object:get(Position, possible),
-    object:maybe_update(
-      Position, placed,
-      fun (Placed) ->
-	      case Placed == undefined andalso possible:size(Possible) == 1 of
-		  true ->
-		      Forced = possible:first(Possible),
-		      %% XXX Set possible to set with just Forced if update
-		      %% says we updated?
-		      {ok, Forced};
-		  false ->
-		      not_updated
-	      end
-      end).
-
-get_number(Position = {position, _}) ->
-    object:get(Position, number).
-
-get_placed(Position = {position, _}) ->
-    object:get(Position, placed).
-
-get_possible(Position = {position, _}) ->
-    object:get(Position, possible).
 
 to_string(Position = {position, _}) ->
     spud:format("~w ~w ~s", [get_number(Position), get_placed(Position),
