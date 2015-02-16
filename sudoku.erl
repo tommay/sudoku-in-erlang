@@ -1,9 +1,24 @@
--module(sudoku).
--export([start/1]).
--compile(export_all).
+#!/usr/bin/env escript
 
-s() ->
-    start("../puzzle3.txt").
+%% escript:
+%% http://erlangcentral.org/frame/?href=http%3A%2F%2Fwww.erlang.org%2Fdoc%2Fman%2Fescript.html#.VOF5BS4YMvg
+%%
+%% erl:
+%% https://erlangcentral.org/wiki/index.php?title=Running_Erlang_Code_From_The_Command_Line
+
+%% These two lines are optional.
+-module(sudoku).
+-export([main/1]).
+
+main([]) ->
+    usage();
+main([Filename]) ->
+    start(Filename);
+main(_) ->
+    usage().
+
+usage() ->
+    io:format("Usage: sudoku filename~n").
 
 start(Filename) ->
     Setup = get_setup(Filename),
