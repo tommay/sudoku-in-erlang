@@ -1,3 +1,6 @@
+%% This is unused.  It just saves a few ideas for adding additional
+%% solving tachniques that the other languages use.
+
 -module(puzzle).
 -export([new/1,solve/1]).
 
