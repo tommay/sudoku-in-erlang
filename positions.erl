@@ -86,29 +86,28 @@ solve(Positions = {positions, _}) ->
     %% unplaced position with the fewest possibilities remaining.
 
     MinPosition = min_by_possible_size(Positions),
-    io:format("MinPosition: ~s~n", [position:to_string(MinPosition)]),
 
     case position:get_placed(MinPosition) == undefined of
 	false ->
             %% Solved.  Return Positions as a solution.
-	    %% puts "Solved:"
-	    %% print_puzzle
-	    {solved, Positions};
+	    spud:debug("Solved:~n~s~n~n", [to_puzzle(Positions)]),
+	    [Positions];
 	true ->
 	    Possible = position:get_possible(MinPosition),
 	    case possible:size(Possible) of
 		0 ->
 		    %% Failed.  No solution to return.
-		    %% puts "Backing out."
-		    {failed};
+		    spud:debug("Backing out."),
+		    [];
 		_ ->
 		    %% Found an unplaced position with one or more
 		    %% possibilities.  Guess each possibility
 		    %% recursively, and return any solutions we find.
-		    possible:map(
+		    possible:flatmap(
 		      Possible,
 		      fun (Digit) ->
-			      solve(place(Positions, MinPosition, Digit))
+			      Guess = place(Positions, MinPosition, Digit),
+			      solve(Guess)
 		      end)
 	    end
     end.

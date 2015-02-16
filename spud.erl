@@ -1,6 +1,6 @@
 -module(spud).
 -export([maybe_update_one/2, or_else/2, do_while/2, min_by/2, slices/2]).
--export([format/2]).
+-export([format/2, debug/1, debug/2]).
 
 %% Some handy utility functions.
 
@@ -62,8 +62,6 @@ min_by(List, Func) when is_list(List), is_function(Func) ->
     {_, MinElement} = lists:min(Tuples),
     MinElement.
 
-format(Format, Data) ->
-    lists:flatten(io_lib:format(Format, Data)).
 
 slices([], _N) when is_integer(_N) ->
     [];
@@ -71,3 +69,11 @@ slices(List, N) ->
     {Slice, Rest} = lists:split(N, List),
     [Slice | slices(Rest, N)].
 
+format(Format, Data) ->
+    lists:flatten(io_lib:format(Format, Data)).
+
+debug(Format, Data) ->
+    io:format(Format, Data).
+
+debug(String) ->
+    io:format(String).

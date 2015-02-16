@@ -8,8 +8,15 @@ s() ->
 start(Filename) ->
     Setup = get_setup(Filename),
     Positions = positions:new(Setup),
-    io:format("positions: ~s~n", [positions:to_string(Positions)]),
-    positions:solve(Positions).
+    Solutions = positions:solve(Positions),
+    lists:foreach(
+      fun (SolvedPositions) ->
+	      io:format("~n"),
+	      positions:print_puzzle(SolvedPositions),
+	      io:format("~n")
+      end,
+      Solutions),
+    io:format("~w solutions~n", [length(Solutions)]).
 
 get_setup(Filename) ->
     {ok, Raw} = file:read_file(Filename),
