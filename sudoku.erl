@@ -9,6 +9,7 @@ s() ->
 %% if any.
 %%
 start(Filename) ->
+    semaphore:start(limiter, 4),
     Setup = get_setup(Filename),
     Puzzle = puzzle:new(Setup),
     Solutions = puzzle:solve(Puzzle),

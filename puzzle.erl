@@ -74,6 +74,8 @@ spawn_solver(Listener, Puzzle = {puzzle, _}) ->
 %% back to the Listener.
 %%
 solve(Listener, Puzzle = {puzzle, _}) ->
+    semaphore:acquire(limiter),
+
     %% We get here either because we're done, we've failed, or we have
     %% to guess and recurse.  We can distinguish by examining the
     %% unplaced position with the fewest possibilities remaining.
