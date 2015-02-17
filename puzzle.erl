@@ -57,6 +57,11 @@ place({puzzle, List}, AtPosition, Digit) ->
 %% Puzzle.
 %%
 solve(Puzzle = {puzzle, _}) ->
+    Self = self(),
+    spawn(fun () -> solve(Self, Puzzle) end),
+    receive_solutions(1).
+
+solve(Pid, Puzzle = {puzzle, _}) ->
     %% We get here either because we're done, we've failed, or we have
     %% to guess and recurse.  We can distinguish by examining the
     %% unplaced position with the fewest possibilities remaining.
@@ -66,25 +71,37 @@ solve(Puzzle = {puzzle, _}) ->
     case position:get_placed(MinPosition) == undefined of
 	false ->
             %% Solved.  Return Puzzle as a solution.
-	    [Puzzle];
+	    Pid ! [Puzzle];
 	true ->
 	    Possible = position:get_possible(MinPosition),
 	    case possible:size(Possible) of
 		0 ->
 		    %% Failed.  Return no solutions.
-		    [];
+		    Pid ! [];
 		_ ->
 		    %% Found an unplaced position with one or more
-		    %% possibilities.  Guess each possibility
-		    %% recursively, and return any solutions we find.
-		    possible:flatmap(
+		    %% possibilities.  Guess each possibility, spawn
+		    %% %a solve process, and return any solutions we
+		    %% get.
+		    possible:foreach(
 		      Possible,
 		      fun (Digit) ->
 			      Guess = place(Puzzle, MinPosition, Digit),
-			      solve(Guess)
-		      end)
+			      solve(self(), Guess)
+		      end),
+		    Pid ! receive_solutions(possible:size(Possible))
 	    end
     end.
+
+receive_solutions(N) ->
+    lists:flatmap(
+      fun (_) ->
+	      receive
+		  Result when is_list(Result) ->
+		      Result
+	      end
+      end,
+      lists:seq(1, N)).
 
 %% Returns the unplaced Position with the smallest set of
 %% possibilities.  This is used to find the best Position to make a

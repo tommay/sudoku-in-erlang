@@ -1,5 +1,9 @@
 -module(sudoku).
 -export([start/1]).
+-export([s/0]).
+
+s() ->
+    start("../evil1.txt").
 
 %% Initializes Puzzle from the given Filename and prints out solutions
 %% if any.
