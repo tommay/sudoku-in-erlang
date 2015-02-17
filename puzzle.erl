@@ -62,7 +62,9 @@ solve(Puzzle = {puzzle, _}) ->
 
 spawn_solver(Puzzle = {puzzle, _}) ->
     Self = self(),
-    spawn(fun () -> solve(Self, Puzzle) end).
+    spawn(fun () ->
+		  semaphore:acquire(limiter),
+		  solve(Self, Puzzle) end).
 
 solve(Listener, Puzzle = {puzzle, _}) ->
     %% We get here either because we're done, we've failed, or we have
@@ -81,8 +83,12 @@ solve(Listener, Puzzle = {puzzle, _}) ->
 		0 ->
 		    %% Failed.  Return no solutions.
 		    Listener ! [];
+		1 ->
+		    %% Just tail-recurse to handle this.
+		    Digit = possible:first(Possible),
+		    solve(Listener, place(Puzzle, MinPosition, Digit));
 		_ ->
-		    %% Found an unplaced position with one or more
+		    %% Found an unplaced position with two or more
 		    %% possibilities.  Guess each possibility, spawn
 		    %% a solve process, and return any solutions we
 		    %% get.
