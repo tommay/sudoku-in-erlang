@@ -112,7 +112,7 @@ to_string({puzzle, List}) when is_list(List) ->
 	      case position:get_placed(Position) of
 		  undefined ->
 		      45;
-		  Digit = _ ->
+		  Digit ->
 		      Digit + 48
 	      end
       end,
