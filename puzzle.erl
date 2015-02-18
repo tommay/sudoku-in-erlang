@@ -135,25 +135,19 @@ receive_solutions() ->
 receive_solutions(Dict, Solutions) ->
     receive
 	{Solver, started} ->
-	    started(Dict, Solver, Solutions);
+	    count(Dict, Solver, Solutions);
 	{Solver, solved, Puzzle} ->
-	    finished(Dict, Solver, [Puzzle | Solutions]);
+	    count(Dict, Solver, [Puzzle | Solutions]);
 	{Solver, failed} ->
-	    finished(Dict, Solver, Solutions)
+	    count(Dict, Solver, Solutions)
     end.
 
-started(Dict, Solver, Solutions) ->
-    transition(Dict, Solver, finished, started, Solutions).
-
-finished(Dict, Solver, Solutions) ->
-    transition(Dict, Solver, started, finished, Solutions).
-
-transition(Dict, Solver, From, To, Solutions) ->
+count(Dict, Solver, Solutions) ->
     Dict2 = case dict:find(Solver, Dict) of
-		{ok, From} ->
+		{ok, 1} ->
 		    dict:erase(Solver, Dict);
 		error ->
-		    dict:store(Solver, To, Dict)
+		    dict:store(Solver, 1, Dict)
 	    end,
     case dict:size(Dict2) of
 	0 ->
