@@ -66,11 +66,7 @@ solve(Puzzle = {puzzle, _}) ->
 %% message for its bookkeeping.
 %%
 spawn_solver(Listener, Puzzle = {puzzle, _}) ->
-    spawn(
-      fun () ->
-	      semaphore:acquire(limiter),
-	      solve(Listener, Puzzle)
-      end),
+    spawn(fun () -> solve(Listener, Puzzle) end),
     %% Need to send this from the current process so the Listener
     %% receives it before it receives our failed message, adjusts its
     %% count, and possibly finishes.
