@@ -1,25 +1,32 @@
 -module(puzzle).
 -export([new/1, solve/1, print_puzzle/1]).
 
-%% Returns a new Puzzle object which contains a list of Positions.
-%% Setup is a string of 81 digits or dashes used to initialize the
-%% digit placed in each Position.
+-record(puzzle, {positions, exclusions}).
+-define(is_puzzle(Term), is_record(Term, puzzle)).
+
+%% Returns a new Puzzle with empty Positions.
+%%
+new() ->
+    #puzzle{positions = positions:new(),
+	    exclusions = exclusions:new()}.
+
+%% Returns a new Puzzle with each Position initialized according to
+%% Setup, which is a string of 81 digits or dashes.
 %%
 new(Setup) ->
-    List = [position:new(N) || N <- lists:seq(0, 80)],
-    This = {puzzle, List},
     Digits = to_digits(Setup),
-    Zipped = lists:zip(Digits, List),
+    Numbers = lists:seq(0, 80),
+    Zipped = lists:zip(Digits, Numbers),
     lists:foldl(
-      fun ({Digit, Position}, Accum = {puzzle, _}) ->
+      fun ({Digit, Number}, This) ->
 	      case Digit of
 		  undefined ->
-		      Accum;
+		      This;
 		  _ ->
-		      place(Accum, Position, Digit)
+		      place(This, Number, Digit)
 	      end
       end,
-      This,
+      new(),
       Zipped).
 
 %% Given a Setup string, returns a list of numbers or undefined for
@@ -33,30 +40,41 @@ to_digits(Setup) ->
 	     Char - $0
      end || Char <- Setup].
 
-%% Returns new Puzzle with Digit placed in AtPosition.  The possible
-%% sets of all Positions are updated to account for the new placement.
+%% Returns a new Puzzle with Digit placed at Position AtNumber.  The
+%% possible sets of all Positions are updated to account for the new
+%% placement.
 %%
-place({puzzle, List}, AtPosition, Digit) ->
-    AtNumber = position:get_number(AtPosition),
-    {
-      puzzle,
-      [case position:get_number(Position) == AtNumber of
-	   true ->
-	       position:place(Position, Digit);
-	   false ->
-	       case position:is_excluded_by(Position, AtPosition) of
-		   true ->
-		       position:not_possible(Position, Digit);
-		   false ->
-		       Position
-	       end
-       end || Position <- List]
-    }.
+place(This, AtNumber, Digit)
+  when ?is_puzzle(This), is_number(AtNumber), is_number(Digit) ->
+    Positions = This#puzzle.positions,
+    %% Place the Digit.
+    Positions2 = positions:update(
+		   Positions,
+		   AtNumber,
+		   fun (Position) -> position:place(Position, Digit) end),
+    %% Exclude Digit from excluded Positions.
+    ExclusionList = exclusions:get_list_for_position(
+		      This#puzzle.exclusions, AtNumber),
+    Positions3 = do_exclusions(Positions2, Digit, ExclusionList),
+    This#puzzle{positions = Positions3}.
+
+do_exclusions(Positions, Digit, ExclusionList) ->
+    lists:foldl(
+      fun (Number, PositionsAccum) ->
+	      positions:update(
+		PositionsAccum,
+		Number,
+		fun (Position) ->
+			position:not_possible(Position, Digit)
+		end)
+      end,
+      Positions,
+      ExclusionList).
 
 %% Returns a possibly empty list of solved Puzzles starting from this
 %% Puzzle.
 %%
-solve(This = {puzzle, _}) ->
+solve(This) when ?is_puzzle(This) ->
     spawn_solver(This, self()),
     receive_solutions().
 
@@ -65,9 +83,9 @@ solve(This = {puzzle, _}) ->
 %% that also report back to the Listener.  Sends the Listener a started
 %% message for its bookkeeping.
 %%
-spawn_solver(This = {puzzle, _}, Listener) ->
+spawn_solver(This, Listener) when ?is_puzzle(This), is_pid(Listener) ->
     spawn(fun () -> solve(This, Listener) end),
-    %% Need to send this from the current process so the Listener
+    %% Need to send "started" from the current process so the Listener
     %% receives it before it receives our failed message, adjusts its
     %% count, and possibly finishes.
     Listener ! started.
@@ -76,13 +94,14 @@ spawn_solver(This = {puzzle, _}, Listener) ->
 %% Listener, and possibly spawns further processes that also report
 %% back to the Listener.
 %%
-solve(This = {puzzle, _}, Listener) ->
+solve(This, Listener) when ?is_puzzle(This), is_pid(Listener) ->
     %% We get here either because we're done, we've failed, or we have
     %% to guess and recurse.  We can distinguish by examining the
     %% unplaced position with the fewest possibilities remaining.
 
-    MinPosition = min_by_possible_size(This),
+    MinPosition = positions:min_by_possible_size(This#puzzle.positions),
     Possible = position:get_possible(MinPosition),
+
     case Possible == undefined of
 	true ->
             %% Solved.  Return This as a solution.
@@ -99,20 +118,21 @@ solve(This = {puzzle, _}, Listener) ->
 		    %% possibility) recurse.
 		    PossibileDigitList = possible:to_list(Possible),
 		    do_guesses(This, Listener,
-			       MinPosition, PossibileDigitList)
+			       position:get_number(MinPosition),
+			       PossibileDigitList)
 	    end
     end.
 
 %% If this is the last guess then just recurse in thie process.  If
 %% there are more guesses to make then spawn a solver for this one.
 %%
-do_guesses(This, Listener, Position, [Digit]) ->
-    Guess = place(This, Position, Digit),
+do_guesses(This, Listener, Number, [Digit]) ->
+    Guess = place(This, Number, Digit),
     solve(Guess, Listener);
-do_guesses(This, Listener, Position, [Digit|Rest]) ->
-    Guess = place(This, Position, Digit),
+do_guesses(This, Listener, Number, [Digit|Rest]) ->
+    Guess = place(This, Number, Digit),
     spawn_solver(Guess, Listener),
-    do_guesses(This, Listener, Position, Rest).
+    do_guesses(This, Listener, Number, Rest).
 
 %% Keep track of pending results and accumulate the solutions we've
 %% gotten so far, and recurse until there are no pending results left.
@@ -142,41 +162,14 @@ count(Pending, Increment, Solutions) ->
 	    receive_solutions(Pending2, Solutions)
     end.
 
-%% Returns the unplaced Position with the smallest set of
-%% possibilities.  This is used to find the best Position to make a
-%% guess for to minimize the amount of guessing.
-%%
-min_by_possible_size({puzzle, List}) when is_list(List) ->
-    spud:min_by(
-      List,
-      fun (Position) ->
-	      Possible = position:get_possible(Position),
-	      %% Sort placed positions to the end.
-	      case Possible == undefined of
-		  false ->
-		      possible:size(Possible);
-		  true ->
- 		      10
-	      end
-      end).
-
 %% Returns a raw string of 81 digits and dashes, like the argument to new.
 %%
-to_string({puzzle, List}) when is_list(List) ->
-    lists:map(
-      fun (Position) ->
-	      case position:get_placed(Position) of
-		  undefined ->
-		      $-;
-		  Digit ->
-		      Digit + $0
-	      end
-      end,
-      List).
+to_string(This) when ?is_puzzle(This) ->
+    positions:to_string(This#puzzle.positions).
 
 %% Returns a string that prints out as a grid of digits.
 %%
-to_puzzle(This = {puzzle, _}) ->
+to_puzzle(This) when ?is_puzzle(This) ->
     String = to_string(This),
     string:join(
       lists:map(
@@ -194,6 +187,5 @@ to_puzzle(This = {puzzle, _}) ->
 
 %% Prints the to_puzzle string.
 %%
-print_puzzle(This = {puzzle, _}) ->
+print_puzzle(This) when ?is_puzzle(This) ->
     io:format("~s~n", [to_puzzle(This)]).
-
