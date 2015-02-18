@@ -73,8 +73,12 @@ solve(Puzzle = {puzzle, _}) ->
 		0 ->
 		    %% Failed.  Return no solutions.
 		    [];
+		1 ->
+		    %% One possibility.  Just recurse.
+		    Digit = possible:first(Possible),
+		    solve(place(Puzzle, MinPosition, Digit));
 		_ ->
-		    %% Found an unplaced position with one or more
+		    %% Found an unplaced position with two or more
 		    %% possibilities.  Guess each possibility
 		    %% recursively, and return any solutions we find.
 		    possible:flatmap(
