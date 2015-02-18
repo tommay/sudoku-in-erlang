@@ -27,10 +27,10 @@ new(Setup) ->
 %%
 to_digits(Setup) ->
     [case Char of
-	 45 ->
+	 $- ->
 	     undefined;
 	 _ ->
-	     Char - 48
+	     Char - $0
      end || Char <- Setup].
 
 %% Returns new Puzzle with Digit placed in AtPosition.  The possible
@@ -165,9 +165,9 @@ to_string({puzzle, List}) when is_list(List) ->
       fun (Position = {position, _}) ->
 	      case position:get_placed(Position) of
 		  undefined ->
-		      45;
+		      $-;
 		  Digit ->
-		      Digit + 48
+		      Digit + $0
 	      end
       end,
       List).
