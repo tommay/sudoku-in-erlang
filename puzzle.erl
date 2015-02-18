@@ -66,12 +66,15 @@ solve(Puzzle = {puzzle, _}) ->
 %% message for its bookkeeping.
 %%
 spawn_solver(Listener, Puzzle = {puzzle, _}) ->
-    Solver = spawn(
-	       fun () ->
-		       semaphore:acquire(limiter),
-		       solve(Listener, Puzzle)
-	       end),
-    Listener ! {Solver, started}.
+    spawn(
+      fun () ->
+	      semaphore:acquire(limiter),
+	      solve(Listener, Puzzle)
+      end),
+    %% Need to send this from the current process so the Listener
+    %% receives it before it receives our failed message, adjusts its
+    %% count, and possibly finishes.
+    Listener ! started.
 
 %% Try to solve the Puzzle then report back solved or failed to the
 %% Listener, and possibly spawns further processes that also report
@@ -87,13 +90,13 @@ solve(Listener, Puzzle = {puzzle, _}) ->
     case position:get_placed(MinPosition) == undefined of
 	false ->
             %% Solved.  Return Puzzle as a solution.
-	    Listener ! {self(), solved, Puzzle};
+	    Listener ! {solved, Puzzle};
 	true ->
 	    Possible = position:get_possible(MinPosition),
 	    case possible:size(Possible) of
 		0 ->
 		    %% Failed.  Return no solutions.
-		    Listener ! {self(), failed};
+		    Listener ! failed;
 		1 ->
 		    %% Just tail-recurse to handle this.
 		    Digit = possible:first(Possible),
@@ -109,51 +112,36 @@ solve(Listener, Puzzle = {puzzle, _}) ->
 			      Guess = place(Puzzle, MinPosition, Digit),
 			      spawn_solver(Listener, Guess)
 		      end),
-		    Listener ! {self(), failed}
+		    Listener ! failed
 	    end
     end.
 
-%% This uses a Dict to track each process that we're waiting for.  A
-%% spawning process will send a message when it has spawned solver
-%% process.  The last thing a solver process does is send a
-%% solved/failed message.  The solved/failed message may arrive before
-%% the started message.  Once a pair of messages has arrived for the
-%% Solver (in any order) the Solver is removed from the dict.  If the
-%% dict is empty we wait for more messages otherwise we return what we
-%% got.
-%%
-%% I had to think about races a lot here when doing the bookkeeping to
-%% make sure receive_solutions didn't return until all processes had
-%% reported back, if we get the solved/failed message before the
-%% started message.  And also to make sure started messages were sent
-%% before solved/failed messages.  It was like the bad old days of
-%% concurrent programming, ugh.
+%% Keep track of pending results and accumulate the solutions we've
+%% gotten so far, and recurse until there are no pending results left.
 %%
 receive_solutions() ->
-    receive_solutions(dict:new(), []).
+    receive_solutions(0, []).
 
-receive_solutions(Dict, Solutions) ->
+receive_solutions(Pending, Solutions) ->
     receive
-	{Solver, started} ->
-	    count(Dict, Solver, Solutions);
-	{Solver, solved, Puzzle} ->
-	    count(Dict, Solver, [Puzzle | Solutions]);
-	{Solver, failed} ->
-	    count(Dict, Solver, Solutions)
+	started ->
+	    count(Pending, +1, Solutions);
+	{solved, Puzzle} ->
+	    count(Pending, -1, [Puzzle | Solutions]);
+	failed ->
+	    count(Pending, -1, Solutions);
+	Msg = _ ->
+	    io:format("wtf: ~p~n", [Msg]),
+	    receive_solutions(Pending, Solutions)
     end.
 
-count(Dict, Solver, Solutions) ->
-    Dict2 = case dict:find(Solver, Dict) of
-		{ok, 1} ->
-		    dict:erase(Solver, Dict);
-		error ->
-		    dict:store(Solver, 1, Dict)
-	    end,
-    case dict:size(Dict2) of
+count(Pending, Increment, Solutions) ->
+    Pending2 = Pending + Increment,
+    case Pending2 of
 	0 ->
 	    Solutions;
 	_ ->
-	    receive_solutions(Dict2, Solutions)
+	    receive_solutions(Pending2, Solutions)
     end.
 
 %% Returns the unplaced Position with the smallest set of

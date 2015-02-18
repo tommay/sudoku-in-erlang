@@ -35,5 +35,5 @@ debug(Format, Data) ->
 %% Write a string for debugging.
 %%
 debug(String) ->
-    String.
-%    io:format(String).
+%    String.
+    io:format(String).
