@@ -33,7 +33,7 @@ to_digits(Setup) ->
 	     Char - 48
      end || Char <- Setup].
 
-%% Retuns new Puzzle with Digit placed in AtPosition.  The possible
+%% Returns new Puzzle with Digit placed in AtPosition.  The possible
 %% sets of all Positions are updated to account for the new placement.
 %%
 place({puzzle, List}, AtPosition, Digit) ->
@@ -53,19 +53,30 @@ place({puzzle, List}, AtPosition, Digit) ->
        end || Position <- List]
     }.
 
-%% Returns a possible empty list of solved Puzzles starting from this
+%% Returns a possibly empty list of solved Puzzles starting from this
 %% Puzzle.
 %%
 solve(Puzzle = {puzzle, _}) ->
-    spawn_solver(Puzzle),
-    receive_solutions(1).
+    spawn_solver(self(), Puzzle),
+    receive_solutions().
 
-spawn_solver(Puzzle = {puzzle, _}) ->
-    Self = self(),
-    spawn(fun () ->
-		  semaphore:acquire(limiter),
-		  solve(Self, Puzzle) end).
+%% Spawns a process to try to solve the Puzzle then report back solved
+%% or failed to the Listener, and possibly spawns further processes
+%% that also report back to the Listener.  Sends the Listener a started
+%% message for its bookkeeping.
+%%
+spawn_solver(Listener, Puzzle = {puzzle, _}) ->
+    Solver = spawn(
+	       fun () ->
+		       semaphore:acquire(limiter),
+		       solve(Listener, Puzzle)
+	       end),
+    Listener ! {Solver, started}.
 
+%% Try to solve the Puzzle then report back solved or failed to the
+%% Listener, and possibly spawns further processes that also report
+%% back to the Listener.
+%%
 solve(Listener, Puzzle = {puzzle, _}) ->
     %% We get here either because we're done, we've failed, or we have
     %% to guess and recurse.  We can distinguish by examining the
@@ -76,13 +87,13 @@ solve(Listener, Puzzle = {puzzle, _}) ->
     case position:get_placed(MinPosition) == undefined of
 	false ->
             %% Solved.  Return Puzzle as a solution.
-	    Listener ! [Puzzle];
+	    Listener ! {self(), solved, Puzzle};
 	true ->
 	    Possible = position:get_possible(MinPosition),
 	    case possible:size(Possible) of
 		0 ->
 		    %% Failed.  Return no solutions.
-		    Listener ! [];
+		    Listener ! {self(), failed};
 		1 ->
 		    %% Just tail-recurse to handle this.
 		    Digit = possible:first(Possible),
@@ -96,21 +107,60 @@ solve(Listener, Puzzle = {puzzle, _}) ->
 		      Possible,
 		      fun (Digit) ->
 			      Guess = place(Puzzle, MinPosition, Digit),
-			      spawn_solver(Guess)
+			      spawn_solver(Listener, Guess)
 		      end),
-		    Listener ! receive_solutions(possible:size(Possible))
+		    Listener ! {self(), failed}
 	    end
     end.
 
-receive_solutions(N) ->
-    lists:flatmap(
-      fun (_) ->
-	      receive
-		  Result when is_list(Result) ->
-		      Result
-	      end
-      end,
-      lists:seq(1, N)).
+%% This uses a Dict to track each process that we're waiting for.  A
+%% spawning process will send a message when it has spawned solver
+%% process.  The last thing a solver process does is send a
+%% solved/failed message.  The solved/failed message may arrive before
+%% the started message.  Once a pair of messages has arrived for the
+%% Solver (in any order) the Solver is removed from the dict.  If the
+%% dict is empty we wait for more messages otherwise we return what we
+%% got.
+%%
+%% I had to think about races a lot here when doing the bookkeeping to
+%% make sure receive_solutions didn't return until all processes had
+%% reported back, if we get the solved/failed message before the
+%% started message.  And also to make sure started messages were sent
+%% before solved/failed messages.  It was like the bad old days of
+%% concurrent programming, ugh.
+%%
+receive_solutions() ->
+    receive_solutions(dict:new(), []).
+
+receive_solutions(Dict, Solutions) ->
+    receive
+	{Solver, started} ->
+	    started(Dict, Solver, Solutions);
+	{Solver, solved, Puzzle} ->
+	    finished(Dict, Solver, [Puzzle | Solutions]);
+	{Solver, failed} ->
+	    finished(Dict, Solver, Solutions)
+    end.
+
+started(Dict, Solver, Solutions) ->
+    transition(Dict, Solver, finished, started, Solutions).
+
+finished(Dict, Solver, Solutions) ->
+    transition(Dict, Solver, started, finished, Solutions).
+
+transition(Dict, Solver, From, To, Solutions) ->
+    Dict2 = case dict:find(Solver, Dict) of
+		{ok, From} ->
+		    dict:erase(Solver, Dict);
+		error ->
+		    dict:store(Solver, To, Dict)
+	    end,
+    case dict:size(Dict2) of
+	0 ->
+	    Solutions;
+	_ ->
+	    receive_solutions(Dict2, Solutions)
+    end.
 
 %% Returns the unplaced Position with the smallest set of
 %% possibilities.  This is used to find the best Position to make a
