@@ -93,24 +93,27 @@ solve(Listener, Puzzle = {puzzle, _}) ->
 		0 ->
 		    %% Failed.  Return no solutions.
 		    Listener ! failed;
-		1 ->
-		    %% Just tail-recurse to handle this.
-		    Digit = possible:first(Possible),
-		    solve(Listener, place(Puzzle, MinPosition, Digit));
 		_ ->
 		    %% Found an unplaced position with two or more
-		    %% possibilities.  Guess each possibility, spawn
-		    %% a solve process, and return any solutions we
-		    %% get.
-		    possible:foreach(
-		      Possible,
-		      fun (Digit) ->
-			      Guess = place(Puzzle, MinPosition, Digit),
-			      spawn_solver(Listener, Guess)
-		      end),
-		    Listener ! failed
+		    %% possibilities.  Guess each possibility and
+		    %% either spawn a solver or (for the last
+		    %% possibility) recurse.
+		    PossibileDigitList = possible:to_list(Possible),
+		    do_guesses(Listener, Puzzle,
+			       MinPosition, PossibileDigitList)
 	    end
     end.
+
+%% If this is the last guess then just recurse in thie process.  If
+%% there are more guesses to make then spawn a solver for this one.
+%%
+do_guesses(Listener, Puzzle, Position, [Digit]) ->
+    Guess = place(Puzzle, Position, Digit),
+    solve(Listener, Guess);
+do_guesses(Listener, Puzzle, Position, [Digit|Rest]) ->
+    Guess = place(Puzzle, Position, Digit),
+    spawn_solver(Listener, Guess),
+    do_guesses(Listener, Puzzle, Position, Rest).
 
 %% Keep track of pending results and accumulate the solutions we've
 %% gotten so far, and recurse until there are no pending results left.
