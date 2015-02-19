@@ -11,7 +11,7 @@ new(Setup) ->
     Digits = to_digits(Setup),
     Zipped = lists:zip(Digits, List),
     lists:foldl(
-      fun ({Digit, Position = {position, _}}, Accum = {puzzle, _}) ->
+      fun ({Digit, Position}, Accum = {puzzle, _}) ->
 	      case Digit of
 		  undefined ->
 		      Accum;
@@ -149,7 +149,7 @@ count(Pending, Increment, Solutions) ->
 min_by_possible_size({puzzle, List}) when is_list(List) ->
     spud:min_by(
       List,
-      fun (Position = {position, _}) ->
+      fun (Position) ->
 	      Possible = position:get_possible(Position),
 	      %% Sort placed positions to the end.
 	      case Possible == undefined of
@@ -164,7 +164,7 @@ min_by_possible_size({puzzle, List}) when is_list(List) ->
 %%
 to_string({puzzle, List}) when is_list(List) ->
     lists:map(
-      fun (Position = {position, _}) ->
+      fun (Position) ->
 	      case position:get_placed(Position) of
 		  undefined ->
 		      $-;
