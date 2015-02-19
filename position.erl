@@ -4,6 +4,7 @@
 -export([to_string/1]).
 
 -record(position, {number, row, col, square, possible, placed}).
+-define(is_position(Term), is_record(Term, position)).
 
 %% Returns a new Position at position Number.  Number is a number from
 %% 0 to 80 denoting where this Position is on the grid.  Figure out
@@ -19,23 +20,23 @@ new(Number) ->
     #position{number = Number, row = Row, col = Col, square = Square,
 	      possible = possible:new(), placed = undefined}.
 
-get_number(This) when is_record(This, position) ->
+get_number(This) when ?is_position(This) ->
     This#position.number.
 
-get_possible(This) when is_record(This, position) ->
+get_possible(This) when ?is_position(This) ->
     This#position.possible.
 
-place(This, Digit) when is_record(This, position) ->
+place(This, Digit) when ?is_position(This) ->
     This#position{placed = Digit, possible = undefined}.
 
-get_placed(This) when is_record(This, position) ->
+get_placed(This) when ?is_position(This) ->
     This#position.placed.
 
 %% Returns true if This and Other are in the same row, column, or
 %% square, else false.
 %%
 is_excluded_by(This, Other)
-  when is_record(This, position), is_record(Other, position) ->
+  when ?is_position(This), ?is_position(Other) ->
     %% Shouldn't have to check that it's the same Position.
     get_number(This) /= get_number(Other) andalso
 	(This#position.row == Other#position.row orelse
@@ -44,7 +45,7 @@ is_excluded_by(This, Other)
 
 %% Returns NewPosition with Digit remove from the possible set.
 %%
-not_possible(This, Digit) when is_record(This, position) ->
+not_possible(This, Digit) when ?is_position(This) ->
     case This#position.possible of
 	undefined ->
 	    This;
@@ -52,6 +53,6 @@ not_possible(This, Digit) when is_record(This, position) ->
 	    This#position{possible = possible:remove(Possible, Digit)}
     end.
 
-to_string(This) when is_record(This, position) ->
+to_string(This) when ?is_position(This) ->
     spud:format("~w ~w ~s", [get_number(This), get_placed(This),
 			     possible:to_string(get_possible(This))]).
