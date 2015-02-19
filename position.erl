@@ -19,39 +19,39 @@ new(Number) ->
       [{number, Number}, {row, Row}, {col, Col}, {square, Square},
        {possible, possible:new()}, placed]).
 
-get_number(Position = {position, _}) ->
-    object:get(Position, number).
+get_number(This = {position, _}) ->
+    object:get(This, number).
 
-get_possible(Position = {position, _}) ->
-    object:get(Position, possible).
+get_possible(This = {position, _}) ->
+    object:get(This, possible).
 
-place(Position = {position, _}, Digit) ->
-    object:set(Position, [{placed, Digit}, {possible, undefined}]).
+place(This = {position, _}, Digit) ->
+    object:set(This, [{placed, Digit}, {possible, undefined}]).
 
-get_placed(Position = {position, _}) ->
-    object:get(Position, placed).
+get_placed(This = {position, _}) ->
+    object:get(This, placed).
 
-%% Returns true if Position and Other are in the same row, column, or
+%% Returns true if This and Other are in the same row, column, or
 %% square, else false.
 %%
-is_excluded_by(Position = {position, _}, Other = {position, _}) ->
+is_excluded_by(This = {position, _}, Other = {position, _}) ->
     %% Shouldn't have to check that it's the same Position.
-    get_number(Position) /= get_number(Other) andalso
-	(object:get(Position, row) == object:get(Other, row) orelse
-	 object:get(Position, col) == object:get(Other, col) orelse
-	 object:get(Position, square) == object:get(Other, square)).
+    get_number(This) /= get_number(Other) andalso
+	(object:get(This, row) == object:get(Other, row) orelse
+	 object:get(This, col) == object:get(Other, col) orelse
+	 object:get(This, square) == object:get(Other, square)).
 
 %% Returns NewPosition with Digit remove from the possible set.
 %%
-not_possible(Position = {position, _}, Digit) ->
+not_possible(This = {position, _}, Digit) ->
     object:update(
-      Position, possible,
+      This, possible,
       fun (Possible = {possible, _}) ->
 	      possible:remove(Possible, Digit);
 	  (undefined) ->
 	      undefined
       end).
 
-to_string(Position = {position, _}) ->
-    spud:format("~w ~w ~s", [get_number(Position), get_placed(Position),
-			     possible:to_string(get_possible(Position))]).
+to_string(This = {position, _}) ->
+    spud:format("~w ~w ~s", [get_number(This), get_placed(This),
+			     possible:to_string(get_possible(This))]).

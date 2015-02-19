@@ -7,7 +7,7 @@
 %%
 new(Setup) ->
     List = [position:new(N) || N <- lists:seq(0, 80)],
-    Puzzle = {puzzle, List},
+    This = {puzzle, List},
     Digits = to_digits(Setup),
     Zipped = lists:zip(Digits, List),
     lists:foldl(
@@ -19,7 +19,7 @@ new(Setup) ->
 		      place(Accum, Position, Digit)
 	      end
       end,
-      Puzzle,
+      This,
       Zipped).
 
 %% Given a Setup string, returns a list of numbers or undefined for
@@ -56,8 +56,8 @@ place({puzzle, List}, AtPosition, Digit) ->
 %% Returns a possibly empty list of solved Puzzles starting from this
 %% Puzzle.
 %%
-solve(Puzzle = {puzzle, _}) ->
-    spawn_solver(self(), Puzzle),
+solve(This = {puzzle, _}) ->
+    spawn_solver(This, self()),
     receive_solutions().
 
 %% Spawns a process to try to solve the Puzzle then report back solved
@@ -65,28 +65,28 @@ solve(Puzzle = {puzzle, _}) ->
 %% that also report back to the Listener.  Sends the Listener a started
 %% message for its bookkeeping.
 %%
-spawn_solver(Listener, Puzzle = {puzzle, _}) ->
-    spawn(fun () -> solve(Listener, Puzzle) end),
+spawn_solver(This = {puzzle, _}, Listener) ->
+    spawn(fun () -> solve(This, Listener) end),
     %% Need to send this from the current process so the Listener
     %% receives it before it receives our failed message, adjusts its
     %% count, and possibly finishes.
     Listener ! started.
 
-%% Try to solve the Puzzle then report back solved or failed to the
+%% Try to solve this Puzzle then report back solved or failed to the
 %% Listener, and possibly spawns further processes that also report
 %% back to the Listener.
 %%
-solve(Listener, Puzzle = {puzzle, _}) ->
+solve(This = {puzzle, _}, Listener) ->
     %% We get here either because we're done, we've failed, or we have
     %% to guess and recurse.  We can distinguish by examining the
     %% unplaced position with the fewest possibilities remaining.
 
-    MinPosition = min_by_possible_size(Puzzle),
+    MinPosition = min_by_possible_size(This),
     Possible = position:get_possible(MinPosition),
     case Possible == undefined of
 	true ->
-            %% Solved.  Return Puzzle as a solution.
-	    Listener ! {solved, Puzzle};
+            %% Solved.  Return This as a solution.
+	    Listener ! {solved, This};
 	false ->
 	    case possible:size(Possible) of
 		0 ->
@@ -98,7 +98,7 @@ solve(Listener, Puzzle = {puzzle, _}) ->
 		    %% either spawn a solver or (for the last
 		    %% possibility) recurse.
 		    PossibileDigitList = possible:to_list(Possible),
-		    do_guesses(Listener, Puzzle,
+		    do_guesses(This, Listener,
 			       MinPosition, PossibileDigitList)
 	    end
     end.
@@ -106,13 +106,13 @@ solve(Listener, Puzzle = {puzzle, _}) ->
 %% If this is the last guess then just recurse in thie process.  If
 %% there are more guesses to make then spawn a solver for this one.
 %%
-do_guesses(Listener, Puzzle, Position, [Digit]) ->
-    Guess = place(Puzzle, Position, Digit),
-    solve(Listener, Guess);
-do_guesses(Listener, Puzzle, Position, [Digit|Rest]) ->
-    Guess = place(Puzzle, Position, Digit),
-    spawn_solver(Listener, Guess),
-    do_guesses(Listener, Puzzle, Position, Rest).
+do_guesses(This, Listener, Position, [Digit]) ->
+    Guess = place(This, Position, Digit),
+    solve(Guess, Listener);
+do_guesses(This, Listener, Position, [Digit|Rest]) ->
+    Guess = place(This, Position, Digit),
+    spawn_solver(Guess, Listener),
+    do_guesses(This, Listener, Position, Rest).
 
 %% Keep track of pending results and accumulate the solutions we've
 %% gotten so far, and recurse until there are no pending results left.
@@ -176,8 +176,8 @@ to_string({puzzle, List}) when is_list(List) ->
 
 %% Returns a string that prints out as a grid of digits.
 %%
-to_puzzle(Puzzle = {puzzle, _}) ->
-    String = to_string(Puzzle),
+to_puzzle(This = {puzzle, _}) ->
+    String = to_string(This),
     string:join(
       lists:map(
 	fun (Rows) ->
@@ -194,6 +194,6 @@ to_puzzle(Puzzle = {puzzle, _}) ->
 
 %% Prints the to_puzzle string.
 %%
-print_puzzle(Puzzle = {puzzle, _}) ->
-    io:format("~s~n", [to_puzzle(Puzzle)]).
+print_puzzle(This = {puzzle, _}) ->
+    io:format("~s~n", [to_puzzle(This)]).
 

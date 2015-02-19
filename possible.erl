@@ -7,15 +7,15 @@
 new() ->
     {possible, sets:from_list(lists:seq(1, 9))}.
 
-remove({possible, Set}, Digit) ->
+remove(_This = {possible, Set}, Digit) ->
     {possible, sets:del_element(Digit, Set)}.
 
-size({possible, Set}) ->
+size(_This = {possible, Set}) ->
     sets:size(Set).
 
-to_list({possible, Set}) ->
+to_list(_This = {possible, Set}) ->
     sets:to_list(Set).
 
-to_string({possible, Set}) ->
+to_string(_This = {possible, Set}) ->
     spud:format("~w", [sets:to_list(Set)]).
 

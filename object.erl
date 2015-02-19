@@ -25,29 +25,29 @@ new(Type, Attributes) when is_atom(Type), is_list(Attributes) ->
 
 %% Returns the Value of the Attribute.
 %%
-get({Type, Dict}, Attribute) when is_atom(Type), is_atom(Attribute) ->
+get(_This = {Type, Dict}, Attribute) when is_atom(Type), is_atom(Attribute) ->
     dict:fetch(Attribute, Dict).
 
 %% Returns NewObject.
 %%
-set(_Object = {Type, Dict}, Attribute, Value)
+set(_This = {Type, Dict}, Attribute, Value)
   when is_atom(Type), is_atom(Attribute) ->
     {Type, dict:store(Attribute, Value, Dict)}.
 
 %% Returns NewObject, with the list of {Attribute, Value} set.
 %%
-set(Object = {Type, _Dict}, []) when is_atom(Type) ->
-    Object;
-set(Object = {Type, _Dict}, [{Attribute, Value} | T])
+set(This = {Type, _Dict}, []) when is_atom(Type) ->
+    This;
+set(This = {Type, _Dict}, [{Attribute, Value} | T])
   when is_atom(Type), is_atom(Attribute) ->
-    NewObject = set(Object, Attribute, Value),
+    NewObject = set(This, Attribute, Value),
     set(NewObject, T);
-set(Object = {Type, _Dict}, [Attribute | T])
+set(This = {Type, _Dict}, [Attribute | T])
   when is_atom(Type), is_atom(Attribute) ->
-    NewObject = set(Object, Attribute, undefined),
+    NewObject = set(This, Attribute, undefined),
     set(NewObject, T).
 
 %% Returns NewObject.
 %%
-update(_Object = {Type, Dict}, Attribute, UpdateFunc) ->
+update(_This = {Type, Dict}, Attribute, UpdateFunc) ->
     {Type, dict:update(Attribute, UpdateFunc, Dict)}.
