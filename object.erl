@@ -1,5 +1,5 @@
 -module(object).
--export([new/1, new/2, set/3, get/2, update/3]).
+-export([new/1, new/2, set/3, set/2, get/2, update/3]).
 
 %% Support "objects" as {type, Dictionary}, where type is an atom and
 %% Dictionary is a dict:new().  Including the type provides runtime

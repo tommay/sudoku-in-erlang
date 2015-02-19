@@ -26,7 +26,7 @@ get_possible(Position = {position, _}) ->
     object:get(Position, possible).
 
 place(Position = {position, _}, Digit) ->
-    object:set(Position, placed, Digit).
+    object:set(Position, [{placed, Digit}, {possible, undefined}]).
 
 get_placed(Position = {position, _}) ->
     object:get(Position, placed).
@@ -47,7 +47,9 @@ not_possible(Position = {position, _}, Digit) ->
     object:update(
       Position, possible,
       fun (Possible = {possible, _}) ->
-	      possible:remove(Possible, Digit)
+	      possible:remove(Possible, Digit);
+	  (undefined) ->
+	      undefined
       end).
 
 to_string(Position = {position, _}) ->

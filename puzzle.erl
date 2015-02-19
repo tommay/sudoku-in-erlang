@@ -82,13 +82,12 @@ solve(Listener, Puzzle = {puzzle, _}) ->
     %% unplaced position with the fewest possibilities remaining.
 
     MinPosition = min_by_possible_size(Puzzle),
-
-    case position:get_placed(MinPosition) == undefined of
-	false ->
+    Possible = position:get_possible(MinPosition),
+    case Possible == undefined of
+	true ->
             %% Solved.  Return Puzzle as a solution.
 	    Listener ! {solved, Puzzle};
-	true ->
-	    Possible = position:get_possible(MinPosition),
+	false ->
 	    case possible:size(Possible) of
 		0 ->
 		    %% Failed.  Return no solutions.
@@ -151,12 +150,12 @@ min_by_possible_size({puzzle, List}) when is_list(List) ->
     spud:min_by(
       List,
       fun (Position = {position, _}) ->
+	      Possible = position:get_possible(Position),
 	      %% Sort placed positions to the end.
-	      case position:get_placed(Position) of
-		  undefined ->
-		      Possible = position:get_possible(Position),
+	      case Possible == undefined of
+		  false ->
 		      possible:size(Possible);
-		  _ ->
+		  true ->
  		      10
 	      end
       end).
