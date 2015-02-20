@@ -9,6 +9,7 @@ s() ->
 %% if any.
 %%
 start(Filename) ->
+    stats:start(),
     Setup = get_setup(Filename),
     Puzzle = puzzle:new(Setup),
     Solutions = puzzle:solve(Puzzle),
@@ -19,7 +20,8 @@ start(Filename) ->
 	      io:format("~n")
       end,
       Solutions),
-    io:format("~w solutions~n", [length(Solutions)]).
+    io:format("~w solutions~n", [length(Solutions)]),
+    io:format("stats: ~s~n", [stats:to_string(stats:get())]).
 
 get_setup(Filename) ->
     {ok, Raw} = file:read_file(Filename),

@@ -143,10 +143,13 @@ receive_solutions() ->
 receive_solutions(Pending, Solutions) ->
     receive
 	started ->
+	    stats:spawned(),
 	    count(Pending, +1, Solutions);
 	{solved, Puzzle} ->
+	    stats:solved(),
 	    count(Pending, -1, [Puzzle | Solutions]);
 	failed ->
+	    stats:failed(),
 	    count(Pending, -1, Solutions);
 	Msg = _ ->
 	    io:format("wtf: ~p~n", [Msg]),
