@@ -46,7 +46,7 @@ to_digits(Setup) ->
 %%
 place(This, AtNumber, Digit)
   when ?is_puzzle(This), is_number(AtNumber), is_number(Digit) ->
-    ExclusionList = exclusions:get_list_for_position(
+    ExclusionSet = exclusions:get_set_for_position(
 		      This#puzzle.exclusions, AtNumber),
     NewPositions =
 	[begin
@@ -55,7 +55,7 @@ place(This, AtNumber, Digit)
 		 true ->
 		     position:place(Position, Digit);
 		 false ->
-		     case lists:member(Number, ExclusionList) of
+		     case sets:is_element(Number, ExclusionSet) of
 			 true ->
 			     position:not_possible(Position, Digit);
 			 false ->
