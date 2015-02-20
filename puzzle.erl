@@ -46,30 +46,24 @@ to_digits(Setup) ->
 %%
 place(This, AtNumber, Digit)
   when ?is_puzzle(This), is_number(AtNumber), is_number(Digit) ->
-    Positions = This#puzzle.positions,
-    %% Place the Digit.
-    Positions2 = positions:update(
-		   Positions,
-		   AtNumber,
-		   fun (Position) -> position:place(Position, Digit) end),
-    %% Exclude Digit from excluded Positions.
     ExclusionList = exclusions:get_list_for_position(
 		      This#puzzle.exclusions, AtNumber),
-    Positions3 = do_exclusions(Positions2, Digit, ExclusionList),
-    This#puzzle{positions = Positions3}.
-
-do_exclusions(Positions, Digit, ExclusionList) ->
-    lists:foldl(
-      fun (Number, PositionsAccum) ->
-	      positions:update(
-		PositionsAccum,
-		Number,
-		fun (Position) ->
-			position:not_possible(Position, Digit)
-		end)
-      end,
-      Positions,
-      ExclusionList).
+    NewPositions =
+	[begin
+	     Number = position:get_number(Position),
+	     case Number == AtNumber of
+		 true ->
+		     position:place(Position, Digit);
+		 false ->
+		     case lists:member(Number, ExclusionList) of
+			 true ->
+			     position:not_possible(Position, Digit);
+			 false ->
+			     Position
+		     end
+	     end
+	 end || Position <- This#puzzle.positions],
+    This#puzzle{positions = NewPositions}.
 
 %% Returns a possibly empty list of solved Puzzles starting from this
 %% Puzzle.
