@@ -1,10 +1,9 @@
 -module(position).
 -export([new/1, get_number/1, get_possible/1, place/2, get_placed/1]).
--export([is_excluded_by/2, not_possible/2]).
+-export([not_possible/2]).
 -export([to_string/1]).
 
--record(position, {number, row, col, square, possible, placed}).
--define(is_position(Term), is_record(Term, position)).
+-include("position.hrl").
 
 %% Returns a new Position at position Number.  Number is a number from
 %% 0 to 80 denoting where this Position is on the grid.  Figure out
@@ -31,17 +30,6 @@ place(This, Digit) when ?is_position(This) ->
 
 get_placed(This) when ?is_position(This) ->
     This#position.placed.
-
-%% Returns true if This and Other are in the same row, column, or
-%% square, else false.
-%%
-is_excluded_by(This, Other)
-  when ?is_position(This), ?is_position(Other) ->
-    %% Shouldn't have to check that it's the same Position.
-    get_number(This) /= get_number(Other) andalso
-	(This#position.row == Other#position.row orelse
-	 This#position.col == Other#position.col orelse
-	 This#position.square == Other#position.square).
 
 %% Returns NewPosition with Digit remove from the possible set.
 %%

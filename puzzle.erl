@@ -1,6 +1,8 @@
 -module(puzzle).
 -export([new/1, solve/1, print_puzzle/1]).
 
+-include("position.hrl").
+
 %% Returns a new Puzzle object which contains a list of Positions.
 %% Setup is a string of 81 digits or dashes used to initialize the
 %% digit placed in each Position.
@@ -44,7 +46,7 @@ place({puzzle, List}, AtPosition, Digit) ->
 	   true ->
 	       position:place(Position, Digit);
 	   false ->
-	       case position:is_excluded_by(Position, AtPosition) of
+	       case ?position@is_excluded_by(Position, AtPosition) of
 		   true ->
 		       position:not_possible(Position, Digit);
 		   false ->
