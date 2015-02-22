@@ -1,36 +1,40 @@
 -module(semaphore).
--export([start/2, acquire/1]).
+-export([start/2, try_acquire/1]).
+
+-define(TRY_ACQUIRE, try_acquire).
+-define(ACQUIRED, acquired).
+-define(NOT_ACQUIRED, not_acquired).
 
 %% Starts a semaphore process and registers under the given name.
 %%
 start(Name, Permits) ->
-    Pid = spawn(fun () -> run(Name, Permits) end),
+    Pid = spawn(fun () -> loop(Name, Permits) end),
     register(Name, Pid).
 
-%% Blocks until the semaphore is acquired.  The semaphore is released
-%% when the process terminates.
+%% Non-blocking call to acquire a semaphore permit.  The semaphore is
+%% released when the process terminates.
 %%
-acquire(Name) ->
-    Name ! {self(), acquire},
+try_acquire(Name) ->
+    Name ! {self(), ?TRY_ACQUIRE},
     receive
-	{Name, acquired} ->
-	    true
+	{Name, ?ACQUIRED} ->
+	    true;
+	{Name, ?NOT_ACQUIRED} ->
+	    false
     end.
 
-run(Name, Permits) ->
-    case Permits of
-	0 ->
-	    receive
-		{'DOWN', _Ref, process, _Pid, _Reason} ->
-		    run(Name, Permits + 1)
-	    end;
-	_ ->
-	    receive
-		{Pid, acquire} ->
+loop(Name, Permits) ->
+    receive
+	{Pid, ?TRY_ACQUIRE} ->
+	    case Permits == 0 of
+		true ->
+		    Pid ! {Name, ?NOT_ACQUIRED},
+		    loop(Name, Permits);
+		false ->
 		    monitor(process, Pid),
-		    Pid ! {Name, acquired},
-		    run(Name, Permits - 1);
-		{'DOWN', _Ref, process, _Pid, _Reason} ->
-		    run(Name, Permits + 1)
-	    end
+		    Pid ! {Name, ?ACQUIRED},
+		    loop(Name, Permits - 1)
+	    end;
+	{'DOWN', _Ref, process, _Pid, _Reason} ->
+	    loop(Name, Permits + 1)
     end.
