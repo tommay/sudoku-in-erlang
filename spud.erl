@@ -1,5 +1,6 @@
 -module(spud).
 -export([min_by/2, slices/2, array_min_by/2, array_update/3, uniq/1]).
+-export([tuple_update/3, tuple_min_by/2]).
 -export([format/2, debug/1, debug/2]).
 
 %% Some handy utility functions.
@@ -29,6 +30,30 @@ array_min_by(Array, Func) when is_function(Func) ->
 	  Array),
     Element.
 
+%% Returns the element of Tuple with the minimum value computed by Func.
+%%
+tuple_min_by(Tuple, Func) when is_function(Func) ->
+    {_, Element} =
+	tuple_foldl(
+	  fun (Element, Accum = {MinN, _MinElement}) ->
+		  N = Func(Element),
+		  case MinN == undefined orelse N < MinN of
+		      true -> {N, Element};
+		      false -> Accum
+		  end
+	  end,
+	  {undefined, undefined},
+	  Tuple),
+    Element.
+
+tuple_foldl(Func, Accum, Tuple) ->
+    tuple_foldl(Func, Accum, Tuple, size(Tuple)).
+
+tuple_foldl(_Func, Accum, _Tuple, N) when N =< 0 ->
+    Accum;
+tuple_foldl(Func, Accum, Tuple, N) ->
+    tuple_foldl(Func, Func(element(N, Tuple), Accum), Tuple, N - 1).
+
 %% Returns a list containing elements each containing N elements from
 %% the original list.
 %%
@@ -50,6 +75,10 @@ uniq(List) when is_list(List) ->
 array_update(Index, Func, Array) ->
     Value = array:get(Index, Array),
     array:set(Index, Func(Value), Array).
+
+tuple_update(Index, Func, Tuple) ->
+    Value = element(Index + 1, Tuple),
+    setelement(Index + 1, Tuple, Func(Value)).
 
 %% Returns a string with Data formatted by Format.
 %%
