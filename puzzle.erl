@@ -73,12 +73,17 @@ solve(This) when ?is_puzzle(This) ->
 %% that also report back to the Collector.  Sends the Collector a
 %% started message for its bookkeeping.
 %%
-spawn_solver(This, Collector) when ?is_puzzle(This) ->
-    spawn(fun () -> solve(This, Collector) end),
-    %% Need to send this from the current process so the Collector
-    %% receives it before it receives our failed message, adjusts its
-    %% count, and possibly finishes.
-    Collector ! started.
+spawn_solver(This, Collector) when ?is_puzzle(This), is_pid(Collector) ->
+    Collector ! started,
+    case semaphore:try_acquire(limiter) of
+	true ->
+	    %% Need to send "started" from the current process so the
+	    %% Collector receives it before it receives our failed
+	    %% message, adjusts its count, and possibly finishes.
+	    spawn(fun () -> solve(This, Collector) end);
+	false ->
+	    solve(This, Collector)
+    end.
 
 %% Try to solve this Puzzle then report back solved or failed to the
 %% Collector, and possibly spawns further processes that also report
