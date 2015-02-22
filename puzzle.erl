@@ -84,7 +84,11 @@ solve(This) when ?is_puzzle(This) ->
 %% message for its bookkeeping.
 %%
 spawn_solver(This, Listener) when ?is_puzzle(This), is_pid(Listener) ->
-    spawn(fun () -> solve(This, Listener) end),
+    spawn(
+      fun () ->
+	      semaphore:acquire(limiter),
+	      solve(Listener, Puzzle)
+      end),
     %% Need to send "started" from the current process so the Listener
     %% receives it before it receives our failed message, adjusts its
     %% count, and possibly finishes.

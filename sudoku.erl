@@ -10,6 +10,7 @@ s() ->
 %%
 start(Filename) ->
     stats:start(),
+    semaphore:start(limiter, 6000),
     Setup = get_setup(Filename),
     Puzzle = puzzle:new(Setup),
     Solutions = puzzle:solve(Puzzle),
