@@ -14,12 +14,7 @@ remove(This, Digit) ->
     This#possible{list = lists:delete(Digit, This#possible.list)}.
 
 size(This) ->
-    list_size(This#possible.list).
-
-list_size([]) ->
-    0;
-list_size([_|T]) ->
-    1 + list_size(T).
+    length(This#possible.list).
 
 to_list(This) ->
     This#possible.list.
