@@ -69,22 +69,22 @@ solve(This) when ?is_puzzle(This) ->
     receive_solutions().
 
 %% Spawns a process to try to solve the Puzzle then report back solved
-%% or failed to the Listener, and possibly spawns further processes
-%% that also report back to the Listener.  Sends the Listener a started
-%% message for its bookkeeping.
+%% or failed to the Collector, and possibly spawns further processes
+%% that also report back to the Collector.  Sends the Collector a
+%% started message for its bookkeeping.
 %%
-spawn_solver(This, Listener) when ?is_puzzle(This) ->
-    spawn(fun () -> solve(This, Listener) end),
-    %% Need to send this from the current process so the Listener
+spawn_solver(This, Collector) when ?is_puzzle(This) ->
+    spawn(fun () -> solve(This, Collector) end),
+    %% Need to send this from the current process so the Collector
     %% receives it before it receives our failed message, adjusts its
     %% count, and possibly finishes.
-    Listener ! started.
+    Collector ! started.
 
 %% Try to solve this Puzzle then report back solved or failed to the
-%% Listener, and possibly spawns further processes that also report
-%% back to the Listener.
+%% Collector, and possibly spawns further processes that also report
+%% back to the Collector.
 %%
-solve(This, Listener) when ?is_puzzle(This) ->
+solve(This, Collector) when ?is_puzzle(This) ->
     %% We get here either because we're done, we've failed, or we have
     %% to guess and recurse.  We can distinguish by examining the
     %% unplaced position with the fewest possibilities remaining.
@@ -94,19 +94,19 @@ solve(This, Listener) when ?is_puzzle(This) ->
     case Possible == undefined of
 	true ->
             %% Solved.  Return This as a solution.
-	    Listener ! {solved, This};
+	    Collector ! {solved, This};
 	false ->
 	    case possible:size(Possible) of
 		0 ->
 		    %% Failed.  Return no solutions.
-		    Listener ! failed;
+		    Collector ! failed;
 		_ ->
 		    %% Found an unplaced position with two or more
 		    %% possibilities.  Guess each possibility and
 		    %% either spawn a solver or (for the last
 		    %% possibility) recurse.
 		    PossibileDigitList = possible:to_list(Possible),
-		    do_guesses(This, Listener,
+		    do_guesses(This, Collector,
 			       MinPosition, PossibileDigitList)
 	    end
     end.
@@ -114,13 +114,13 @@ solve(This, Listener) when ?is_puzzle(This) ->
 %% If this is the last guess then just recurse in thie process.  If
 %% there are more guesses to make then spawn a solver for this one.
 %%
-do_guesses(This, Listener, Position, [Digit]) ->
+do_guesses(This, Collector, Position, [Digit]) ->
     Guess = place(This, Position, Digit),
-    solve(Guess, Listener);
-do_guesses(This, Listener, Position, [Digit|Rest]) ->
+    solve(Guess, Collector);
+do_guesses(This, Collector, Position, [Digit|Rest]) ->
     Guess = place(This, Position, Digit),
-    spawn_solver(Guess, Listener),
-    do_guesses(This, Listener, Position, Rest).
+    spawn_solver(Guess, Collector),
+    do_guesses(This, Collector, Position, Rest).
 
 %% Keep track of pending results and accumulate the solutions we've
 %% gotten so far, and recurse until there are no pending results left.
