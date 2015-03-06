@@ -1,5 +1,5 @@
 -module(puzzle).
--export([new/1, solve/1, print_puzzle/1]).
+-export([new/1, foreach_solution/2, print_puzzle/1]).
 
 -record(puzzle, {positions, exclusions}).
 -define(is_puzzle(Term), is_record(Term, puzzle)).
@@ -71,12 +71,11 @@ do_exclusions(Positions, Digit, ExclusionList) ->
       Positions,
       ExclusionList).
 
-%% Returns a possibly empty list of solved Puzzles starting from this
-%% Puzzle.
+%% Solve Puzzles and call Func with each solved Puzzle.
 %%
-solve(This) when ?is_puzzle(This) ->
+foreach_solution(This, Func) when ?is_puzzle(This), is_function(Func) ->
     spawn_solver(This, self()),
-    receive_solutions().
+    receive_solutions(Func).
 
 %% Spawns a process to try to solve the Puzzle then report back solved
 %% or failed to the Collector, and possibly spawns further processes
@@ -142,32 +141,33 @@ do_guesses(This, Collector, Number, [Digit|Rest]) ->
 %% Keep track of pending results and accumulate the solutions we've
 %% gotten so far, and recurse until there are no pending results left.
 %%
-receive_solutions() ->
-    receive_solutions(0, []).
+receive_solutions(Func) ->
+    receive_solutions(0, Func).
 
-receive_solutions(Pending, Solutions) ->
+receive_solutions(Pending, Func) ->
     receive
 	started ->
 	    stats:spawned(),
-	    count(Pending, +1, Solutions);
+	    count(Pending, +1, Func);
 	{solved, Puzzle} ->
 	    stats:solved(),
-	    count(Pending, -1, [Puzzle | Solutions]);
+	    Func(Puzzle),
+	    count(Pending, -1, Func);
 	failed ->
 	    stats:failed(),
-	    count(Pending, -1, Solutions);
+	    count(Pending, -1, Func);
 	Msg = _ ->
 	    io:format("wtf: ~p~n", [Msg]),
-	    receive_solutions(Pending, Solutions)
+	    receive_solutions(Pending, Func)
     end.
 
-count(Pending, Increment, Solutions) ->
+count(Pending, Increment, Func) ->
     Pending2 = Pending + Increment,
     case Pending2 of
 	0 ->
-	    Solutions;
+	    ok;
 	_ ->
-	    receive_solutions(Pending2, Solutions)
+	    receive_solutions(Pending2, Func)
     end.
 
 %% Returns a raw string of 81 digits and dashes, like the argument to new.
