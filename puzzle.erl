@@ -83,15 +83,16 @@ foreach_solution(This, Func) when ?is_puzzle(This), is_function(Func) ->
 %% started message for its bookkeeping.
 %%
 spawn_solver(This, Collector) when ?is_puzzle(This), is_pid(Collector) ->
+    %% Need to send "started" from the current process so the
+    %% Collector receives it before it receives our failed
+    %% message, adjusts its count, and possibly finishes.
     Collector ! started,
-    case semaphore:try_acquire(limiter) of
+    Func = fun () -> solve(This, Collector) end,
+    case limiter:try_spawn(limiter, Func) of
 	true ->
-	    %% Need to send "started" from the current process so the
-	    %% Collector receives it before it receives our failed
-	    %% message, adjusts its count, and possibly finishes.
-	    spawn(fun () -> solve(This, Collector) end);
+	    ok;
 	false ->
-	    solve(This, Collector)
+	    Func()
     end.
 
 %% Try to solve this Puzzle then report back solved or failed to the

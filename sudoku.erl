@@ -10,15 +10,13 @@ s() ->
 %%
 start(Filename) ->
     stats:start(),
-    semaphore:start(limiter, 20),
+    limiter:start(limiter, 50),
     Setup = get_setup(Filename),
     Puzzle = puzzle:new(Setup),
     puzzle:foreach_solution(
       Puzzle,
-      fun (SolvedPuzzle) ->
-	      io:format("~n"),
-	      puzzle:print_puzzle(SolvedPuzzle),
-	      io:format("~n")
+      fun (_SolvedPuzzle) ->
+	      ok
       end),
 %%    io:format("~w solutions~n", [length(Solutions)]),
     io:format("stats: ~s~n", [stats:to_string(stats:get())]).
