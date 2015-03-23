@@ -87,13 +87,7 @@ spawn_solver(This, Collector) when ?is_puzzle(This), is_pid(Collector) ->
     %% Collector receives it before it receives our failed
     %% message, adjusts its count, and possibly finishes.
     Collector ! started,
-    Func = fun () -> solve(This, Collector) end,
-    case limiter:try_spawn(limiter, Func) of
-	true ->
-	    ok;
-	false ->
-	    Func()
-    end.
+    limiter:run(limiter, fun () -> solve(This, Collector) end).
 
 %% Try to solve this Puzzle then report back solved or failed to the
 %% Collector, and possibly spawns further processes that also report
