@@ -8,5 +8,7 @@ BEAMS = $(ERLS:.erl=.beam)
 
 all: $(BEAMS)
 
+puzzle.beam solver.beam: puzzle.hrl
+
 clean:
 	rm *.beam
