@@ -68,24 +68,20 @@ receive_solutions(Pending, Yield) ->
     receive
 	started ->
 	    stats:spawned(),
-	    count(Pending, +1, Yield);
+	    receive_solutions(Pending + 1, Yield);
 	{solved, Puzzle} ->
 	    stats:solved(),
 	    Yield(Puzzle),
-	    count(Pending, -1, Yield);
+	    maybe_receive_solutions(Pending - 1, Yield);
 	failed ->
 	    stats:failed(),
-	    count(Pending, -1, Yield);
+	    maybe_receive_solutions(Pending - 1, Yield);
 	Msg = _ ->
 	    io:format("wtf: ~p~n", [Msg]),
 	    receive_solutions(Pending, Yield)
     end.
 
-count(Pending, Increment, Yield) ->
-    Pending2 = Pending + Increment,
-    case Pending2 of
-	0 ->
-	    ok;
-	_ ->
-	    receive_solutions(Pending2, Yield)
-    end.
+maybe_receive_solutions(0, _Yield) ->
+    ok;
+maybe_receive_solutions(Pending, Yield) ->
+    receive_solutions(Pending, Yield).
