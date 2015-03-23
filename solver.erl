@@ -61,31 +61,31 @@ do_guesses(This, Collector, Number, [Digit|Rest]) ->
 %% Keep track of pending results and accumulate the solutions we've
 %% gotten so far, and recurse until there are no pending results left.
 %%
-receive_solutions(Func) ->
-    receive_solutions(0, Func).
+receive_solutions(Yield) ->
+    receive_solutions(0, Yield).
 
-receive_solutions(Pending, Func) ->
+receive_solutions(Pending, Yield) ->
     receive
 	started ->
 	    stats:spawned(),
-	    count(Pending, +1, Func);
+	    count(Pending, +1, Yield);
 	{solved, Puzzle} ->
 	    stats:solved(),
-	    Func(Puzzle),
-	    count(Pending, -1, Func);
+	    Yield(Puzzle),
+	    count(Pending, -1, Yield);
 	failed ->
 	    stats:failed(),
-	    count(Pending, -1, Func);
+	    count(Pending, -1, Yield);
 	Msg = _ ->
 	    io:format("wtf: ~p~n", [Msg]),
-	    receive_solutions(Pending, Func)
+	    receive_solutions(Pending, Yield)
     end.
 
-count(Pending, Increment, Func) ->
+count(Pending, Increment, Yield) ->
     Pending2 = Pending + Increment,
     case Pending2 of
 	0 ->
 	    ok;
 	_ ->
-	    receive_solutions(Pending2, Func)
+	    receive_solutions(Pending2, Yield)
     end.

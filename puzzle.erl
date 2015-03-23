@@ -69,11 +69,11 @@ do_exclusions(Positions, Digit, ExclusionList) ->
       Positions,
       ExclusionList).
 
-%% Solve Puzzles and call Func with each solved Puzzle.
+%% Solve Puzzles and call Yield with each solved Puzzle.
 %%
-foreach_solution(This, Func) when ?is_puzzle(This), is_function(Func) ->
+foreach_solution(This, Yield) when ?is_puzzle(This), is_function(Yield) ->
     solver:spawn_solver(This, self()),
-    solver:receive_solutions(Func).
+    solver:receive_solutions(Yield).
 
 %% Returns a raw string of 81 digits and dashes, like the argument to new.
 %%
