@@ -10,6 +10,7 @@
 -export([parallel_min_by/2, parallel_max_by/2]).
 -export([parallel_min_by/3, parallel_max_by/3]).
 -export([array_min_by/2, tuple_min_by/2]).
+-export([find/2, product/2]).
 -export([format/2, debug/1, debug/2]).
 
 %% Some handy utility functions.
@@ -267,6 +268,24 @@ tuple_foldl(_Func, Accum, _Tuple, N) when N =< 0 ->
     Accum;
 tuple_foldl(Func, Accum, Tuple, N) ->
     tuple_foldl(Func, Func(element(N, Tuple), Accum), Tuple, N - 1).
+
+%% Calls Func on each element of the list and returns the first
+%% non-false result, or false if all results are false.
+%%
+find([], _Func) ->
+    false;
+find([H | T], Func) ->
+    case Func(H) of
+	false ->
+	    find(T, Func);
+	Result ->
+	    Result
+    end.
+
+%% Returns all the combinations of an element of As and an element of Bs.
+%%    
+product(As, Bs) ->
+    [{A, B} ||  A <- As, B <- Bs].
 
 %% Returns a string with Data formatted by Format.
 %%
