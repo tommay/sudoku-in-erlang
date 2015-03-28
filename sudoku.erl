@@ -16,7 +16,8 @@ start(Filename) ->
     puzzle:foreach_solution(
       Puzzle,
       fun (_SolvedPuzzle) ->
-	      ok
+	      puzzle:print_puzzle(_SolvedPuzzle),
+	      io:format("~n~n")
       end),
 %%    io:format("~w solutions~n", [length(Solutions)]),
     io:format("stats: ~s~n", [stats:to_string(stats:get())]).
