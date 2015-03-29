@@ -15,15 +15,22 @@ immutability for decades
 This finally works!  I made an escript executable that takes a filename
 and prints any solutions.
 
-It's not clear whether I'll be sticking with some of my design
-approaches.  It's also strictly functional with no actors or
-concurrency.  I'll play with those later, probably when I add
-statistics of the various tachniques.
-
 I've gotten quite comfortable with the pattern matching and like it a
 lot.  If we get this, do that.  If we get something else, do the other
 thing.  Give this piece of the arguments a name so we can use it
 later.
+
+It's not clear whether I'll be sticking with some of my design
+approaches.  It's also strictly functional with no actors or
+concurrency.  I'll play with those later, probably when I add
+statistics of the various techniques.
+
+Update: I wanted multiple processes when solving puzzles with multiple
+solutions so I could use all available cores.  But that made an
+overwhelming number of processes for Erlang to deal with and it would
+run out of memory and crash.  So now there is a limiter process which
+tracks the number of spawned processes and doesn't allow more than N
+to run at once.  There is also a stats server process.
 
 Somtimes it still feels weird to be writing functions that "don't do
 anything"; they just look at their arguments and return some new junk,
