@@ -1,52 +1,49 @@
 -module(stats).
+-behavior(gen_server).
+
 -export([start/0, spawned/0, solved/0, failed/0, get/0, to_string/1]).
+-export([init/1, handle_call/3, handle_cast/2]).
 
 -record(stats, {spawned = 0, solved = 0, failed = 0, current = 0, max = 0}).
 
--define(increment(Rec, Field), Rec#stats{Field = Rec#stats.Field + 1}).
--define(send(Type),
+-define(cast(Type),
 	Type() ->
-	       stats ! Type).
+	       gen_server:cast(stats, Type)).
+-define(handle(Msg, Inc),
+	handle_cast(Msg, State) ->
+	       State2 = track(State, Inc),
+	       State3 = ?increment(State2, Msg),
+	       {noreply, State3}).
+-define(increment(Rec, Field), Rec#stats{Field = Rec#stats.Field + 1}).
 
 start() ->
-    Pid = spawn(fun () -> loop(#stats{}) end),
-    register(stats, Pid).
+    gen_server:start({local, stats}, ?MODULE, [], []).
 
-?send(spawned).
-?send(solved).
-?send(failed).
+init(_Args) ->
+    {ok, #stats{}}.
+
+?cast(spawned).
+?cast(solved).
+?cast(failed).
 
 get() ->
-    stats ! {self(), get},
-    receive
-	Stats when is_record(Stats, stats) ->
-	    Stats
+    gen_server:call(stats, get).
+
+?handle(spawned, +1);
+?handle(solved, -1);
+?handle(failed, -1).
+
+handle_call(get, _From, State) ->
+    {reply, State, State}.
+
+track(State, Inc) ->
+    Current = State#stats.current + Inc,
+    case Current > State#stats.max of
+	true -> State#stats{current = Current, max = Current};
+	false -> State#stats{current = Current}
     end.
 
-track(This, Inc) ->
-    Current = This#stats.current + Inc,
-    case Current > This#stats.max of
-	true -> This#stats{current = Current, max = Current};
-	false -> This#stats{current = Current}
-    end.
-
-loop(This) ->
-    receive
-	spawned ->
-	    Tracked = track(This, +1),
-	    loop(?increment(Tracked, spawned));
-	solved ->
-	    Tracked = track(This, -1),
-	    loop(?increment(Tracked, solved));
-	failed ->
-	    Tracked = track(This, -1),
-	    loop(?increment(Tracked, failed));
-	{Pid, get} ->
-	    Pid ! This,
-	    loop(This)
-    end.
-
-to_string(This) ->
+to_string(State) ->
     spud:format("spawned: ~w solved: ~w failed: ~w max: ~w",
-		[This#stats.spawned, This#stats.solved, This#stats.failed,
-		 This#stats.max]).
+		[State#stats.spawned, State#stats.solved, State#stats.failed,
+		 State#stats.max]).
