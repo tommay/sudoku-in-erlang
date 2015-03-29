@@ -1,5 +1,6 @@
 -module(positions).
--export([new/0, update/3, min_by_possible_size/1, to_string/1]).
+-export([new/0, update/3, min_by_possible_size/1, do_exclusions/3,
+	 to_string/1]).
 
 %% This allow us to (somewhat) abstract out the data type Puzzle uses
 %% to store Positions.
@@ -28,6 +29,19 @@ min_by_possible_size(This) ->
 		      10
 	      end
       end).
+
+do_exclusions(This, Digit, ExclusionList) ->
+    lists:foldl(
+      fun (Number, PositionsAccum) ->
+	      positions:update(
+		PositionsAccum,
+		Number,
+		fun (Position) ->
+			position:not_possible(Position, Digit)
+		end)
+      end,
+      This,
+      ExclusionList).
 
 to_string(This) ->
     lists:map(
