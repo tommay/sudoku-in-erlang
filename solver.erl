@@ -58,8 +58,9 @@ do_guesses(Puzzle, Collector, Number, [Digit|Rest]) ->
     spawn_solver(Guess, Collector),
     do_guesses(Puzzle, Collector, Number, Rest).
 
-%% Keep track of pending results and accumulate the solutions we've
-%% gotten so far, and recurse until there are no pending results left.
+%% Keep track of pending results and call Yield with solutions as they
+%% are found.  Loop until there are no pending results left.  Note
+%% that we start with no pending results.
 %%
 receive_solutions(Yield) ->
     receive_solutions(0, Yield).
