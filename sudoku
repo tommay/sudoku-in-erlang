@@ -1,4 +1,5 @@
 #!/usr/bin/env escript
+%%! -pa ebin
 
 %% escript:
 %% http://www.erlang.org/doc/man/escript.html
@@ -13,6 +14,6 @@
 -export([main/1]).
 
 main([Filename]) ->
-    sudoku:start(Filename);
+    sudoku:main(Filename);
 main(_) ->
     io:format("Usage: sudoku filename~n").

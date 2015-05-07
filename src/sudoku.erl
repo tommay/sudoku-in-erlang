@@ -1,14 +1,10 @@
 -module(sudoku).
--export([start/1]).
--export([s/0]).
-
-s() ->
-    start("../evil1.txt").
+-export([main/1]).
 
 %% Initializes Puzzle from the given Filename and prints out solutions
 %% if any.
 %%
-start(Filename) ->
+main(Filename) ->
     stats:start(),
     limiter:start(limiter, 50),
     Setup = get_setup(Filename),
