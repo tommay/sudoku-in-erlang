@@ -1,45 +1,76 @@
 -module(limiter).
--export([start/2, run/2]).
-
--define(RUN, run).
--define(RESULT, result).
+-behaviour(gen_server).
 
 %% This code uses a semaphore to limit the number of spawned
 %% processes.  Spawned processes can also be limited by using a
 %% process pool (see pool.erl), but this is somewhat faster.  And the
 %% code is simpler.
 
+-record(state, {permits}).
 
-%% Starts a semaphore process and registers under the given name.
+%% ------------------------------------------------------------------
+%% API Function Exports
+%% ------------------------------------------------------------------
+
+-export([start/2, run/2]).
+
+%% ------------------------------------------------------------------
+%% gen_server Function Exports
+%% ------------------------------------------------------------------
+
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+         terminate/2, code_change/3]).
+
+%% ------------------------------------------------------------------
+%% API Function Definitions
+%% ------------------------------------------------------------------
+
+%% Returns {ok, Pid}, or not.
 %%
 start(Name, Permits) ->
-    Pid = spawn(fun () -> loop(Name, Permits) end),
-    register(Name, Pid).
+    gen_server:start({local, Name}, ?MODULE, [Permits], []).
 
 %% Spawns a process to run Func if there is a permit available, else
 %% runs Func in-process.
 %%
-run(Name, Func) ->
-    Name ! {self(), ?RUN, Func},
-    receive
-	{Name, ?RESULT, true} ->
-	    ok;
-	{Name, ?RESULT, false} ->
+run(Limiter, Func) ->
+    case gen_server:call(Limiter, {run, Func}) of
+	true ->
+	    void;
+	false ->
 	    Func()
     end.
 
-loop(Name, Permits) ->
-    receive
-	{Pid, ?RUN, Func} ->
-	    case Permits == 0 of
-		true ->
-		    Pid ! {Name, ?RESULT, false},
-		    loop(Name, Permits);
-		false ->
-		    Pid ! {Name, ?RESULT, true},
-		    monitor(process, spawn(Func)),
-		    loop(Name, Permits - 1)
-	    end;
-	{'DOWN', _Ref, process, _Pid, _Reason} ->
-	    loop(Name, Permits + 1)
+%% ------------------------------------------------------------------
+%% gen_server Function Definitions
+%% ------------------------------------------------------------------
+
+init([Permits]) ->
+    {ok, #state{permits = Permits}}.
+
+handle_call({run, Func}, _From, State) ->
+    case State#state.permits == 0 of
+	true ->
+	    {reply, false, State};
+	false ->
+	    %% Spawn a process and monitor it.  When the process
+	    %% terminates we'll get a 'DOWN' message in handle_info.
+	    monitor(process, spawn(Func)),
+	    {reply, true, State#state{permits = State#state.permits - 1}}
     end.
+
+handle_cast(_Msg, State) ->
+    {noreply, State}.
+
+handle_info({'DOWN', _Ref, process, _Pid, _Reason}, State) ->
+    {noreply, State#state{permits = State#state.permits + 1}}.
+
+terminate(_Reason, _State) ->
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
+
+%% ------------------------------------------------------------------
+%% Internal Function Definitions
+%% ------------------------------------------------------------------
