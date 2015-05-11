@@ -1,0 +1,12 @@
+{application, limiter,
+ [
+  {description, ""},
+  {vsn, "1.0.0"},
+  {registered, [limiter]},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, {limiter_app, {limiter, 50}}},
+  {env, []}
+ ]}.

@@ -12,7 +12,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start/2, run/2]).
+-export([start_link/1, run/2]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -27,8 +27,8 @@
 
 %% Returns {ok, Pid}, or not.
 %%
-start(Name, Permits) ->
-    gen_server:start({local, Name}, ?MODULE, [Permits], []).
+start_link({Name, Permits}) ->
+    gen_server:start_link({local, Name}, ?MODULE, Permits, []).
 
 %% Spawns a process to run Func if there is a permit available, else
 %% runs Func in-process.
@@ -45,7 +45,7 @@ run(Limiter, Func) ->
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
-init([Permits]) ->
+init(Permits) ->
     {ok, #state{permits = Permits}}.
 
 handle_call({run, Func}, _From, State) ->

@@ -6,7 +6,7 @@
 %%
 main(Filename) ->
     application:start(stats),
-    limiter:start(limiter, 50),
+    application:start(limiter),
     Setup = get_setup(Filename),
     Puzzle = puzzle:new(Setup),
     puzzle:foreach_solution(
