@@ -5,7 +5,7 @@
 %% if any.
 %%
 main(Filename) ->
-    stats:start(),
+    application:start(stats),
     limiter:start(limiter, 50),
     Setup = get_setup(Filename),
     Puzzle = puzzle:new(Setup),
