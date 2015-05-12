@@ -1,5 +1,5 @@
 #!/usr/bin/env escript
-%%! -pa ebin apps/stats/ebin apps/limiter/ebin
+%%! -pa ebin apps/stats/ebin apps/limiter/ebin deps/spud/ebin deps/rnd/ebin 
 
 %% escript:
 %% http://www.erlang.org/doc/man/escript.html
