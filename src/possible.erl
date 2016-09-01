@@ -5,7 +5,7 @@
 -record(possible, {list}).
 -define(is_possible(Term), is_record(Term, possible)).
 
-%% An object that maintains the possible digits for a position.
+%% An object that maintains the possible digits for a Position.
 
 new() ->
     #possible{list = lists:seq(1, 9)}.
