@@ -1,10 +1,9 @@
 -module(limiter).
 -behaviour(gen_server).
 
-%% This code uses a semaphore to limit the number of spawned
-%% processes.  Spawned processes can also be limited by using a
-%% process pool (see pool.erl), but this is somewhat faster.  And the
-%% code is simpler.
+%% This code uses an integer count of permits to limit the number of
+%% spawned processes.  Spawned processes can also be limited by using
+%% a process pool but this is somewhat faster and the code is simpler.
 
 -record(state, {permits}).
 
