@@ -1,6 +1,6 @@
 -module(puzzle).
 -include("puzzle.hrl").
--export([new/1, place/3, foreach_solution/2, print_puzzle/1]).
+-export([new/1, foreach_solution/2, print_puzzle/1]).
 
 %% Returns a new Puzzle with empty Positions.
 %%
@@ -38,6 +38,24 @@ to_digits(Setup) ->
 	     Char - $0
      end || Char <- Setup].
 
+%% Solve this Puzzle and call Yield with each solved Puzzle.
+%%
+foreach_solution(This, Yield) when ?is_puzzle(This), is_function(Yield) ->
+    Collector = self(),
+    spawn_solver(This, Collector),
+    collector:collect_and_yield_results(
+      fun (Result) -> yield_solutions(Result, Yield) end).
+
+spawn_solver(Puzzle, Collector) when ?is_puzzle(Puzzle), is_pid(Collector) ->
+    stats:spawned(),
+    collector:spawn_solver(Collector, fun () -> solve(Puzzle, Collector) end).
+
+yield_solutions({solved, Puzzle}, Yield) when ?is_puzzle(Puzzle) ->
+    stats:solved(),
+    Yield(Puzzle);
+yield_solutions(failed, _Yield) ->
+    stats:failed().
+
 %% Try to solve this Puzzle then report back solved or failed to the
 %% Collector, and possibly spawn further processes that also report
 %% back to the Collector.
@@ -53,12 +71,12 @@ solve(This, Collector) when ?is_puzzle(This), is_pid(Collector) ->
     case Possible == undefined of
 	true ->
             %% Solved.  Return This as a solution.
-	    collector:solved(Collector, This);
+	    collector:yield(Collector, {solved, This});
 	false ->
 	    case possible:size(Possible) of
 		0 ->
 		    %% Failed.  Return no solutions.
-		    collector:failed(Collector);
+		    collector:yield(Collector, failed);
 		_ ->
 		    %% Found an unplaced position with two or more
 		    %% possibilities.  Guess each possibility and
@@ -71,16 +89,21 @@ solve(This, Collector) when ?is_puzzle(This), is_pid(Collector) ->
 	    end
     end.
 
-%% If this is the last guess then just recurse in this process.  If
-%% there are more guesses to make then spawn a solver for this one.
+%% Fpr each Digit in the list, use it as a guess for Position Number
+%% and try to solve the resulting Puzzle.
 %%
-do_guesses(This, Collector, Number, [Digit]) ->
-    Guess = puzzle:place(This, Number, Digit),
-    solve(Guess, Collector);
 do_guesses(This, Collector, Number, [Digit|Rest]) ->
     Guess = puzzle:place(This, Number, Digit),
-    collector:spawn_solver(Collector, fun () -> solve(Guess, Collector) end),
-    do_guesses(This, Collector, Number, Rest).
+    %% If this is the last guess then just solve in this process.  If
+    %% there are more guesses to make then spawn a solver for this one
+    %% and recurse to process the rest.
+    case Rest of
+	[] ->
+	    solve(Guess, Collector);
+	_ ->
+	    spawn_solver(Guess, Collector),
+	    do_guesses(This, Collector, Number, Rest)
+    end.
 
 %% Returns a new Puzzle with Digit placed at Position AtNumber.  The
 %% possible sets of all Positions are updated to account for the new
@@ -99,13 +122,6 @@ place(This, AtNumber, Digit)
 		      This#puzzle.exclusions, AtNumber),
     Positions3 = positions:do_exclusions(Positions2, Digit, ExclusionList),
     This#puzzle{positions = Positions3}.
-
-%% Solve this Puzzle and call Yield with each solved Puzzle.
-%%
-foreach_solution(This, Yield) when ?is_puzzle(This), is_function(Yield) ->
-    Collector = self(),
-    collector:spawn_solver(Collector, fun () -> solve(This, Collector) end),
-    collector:collect_solutions(Yield).
 
 %% Returns a raw string of 81 digits and dashes, like the argument to new.
 %%

@@ -1,6 +1,6 @@
 -module(collector).
 -include("puzzle.hrl").
--export([spawn_solver/2, solved/2, failed/1, collect_solutions/1]).
+-export([spawn_solver/2, yield/2, collect_and_yield_results/1]).
 
 %% Spawns a process to try to solve the Puzzle then report back solved
 %% or failed to the Collector, and possibly spawns further processes
@@ -18,39 +18,29 @@ spawn_solver(Collector, Func)
 started(Collector) when is_pid(Collector) ->
     Collector ! started.
 
-solved(Collector, Puzzle) when is_pid(Collector), ?is_puzzle(Puzzle) ->
-    Collector ! {solved, Puzzle}.
-
-failed(Collector) when is_pid(Collector) ->
-    Collector ! failed.
+yield(Collector, Result) when is_pid(Collector) ->
+    Collector ! {result, Result}.
 
 %% Keep track of pending results and call Yield with solutions as they
 %% are found.  Loop until there are no pending results left.  Note
 %% that we start with no pending results.
 %%
-collect_solutions(Yield)
+collect_and_yield_results(Yield)
   when is_function(Yield) ->
-    collect_solutions(0, Yield).
+    collect_and_yield_results(0, Yield).
 
-collect_solutions(PendingCount, Yield)
+collect_and_yield_results(PendingCount, Yield)
   when is_integer(PendingCount), is_function(Yield) ->
     receive
 	started ->
-	    stats:spawned(),
-	    collect_solutions(PendingCount + 1, Yield);
-	{solved, Puzzle} ->
-	    stats:solved(),
-	    Yield(Puzzle),
-	    maybe_collect_solutions(PendingCount - 1, Yield);
-	failed ->
-	    stats:failed(),
-	    maybe_collect_solutions(PendingCount - 1, Yield);
+	    collect_and_yield_results(PendingCount + 1, Yield);
+	{result, Result} ->
+	    Yield(Result),
+	    case PendingCount - 1 of
+		0 -> ok;
+		N -> collect_and_yield_results(N, Yield)
+	    end;
 	Msg ->
 	    io:format("wtf: ~p~n", [Msg]),
-	    collect_solutions(PendingCount, Yield)
+	    collect_and_yield_results(PendingCount, Yield)
     end.
-
-maybe_collect_solutions(0, _Yield) ->
-    ok;
-maybe_collect_solutions(PendingCount, Yield) ->
-    collect_solutions(PendingCount, Yield).
