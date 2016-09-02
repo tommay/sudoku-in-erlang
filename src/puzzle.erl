@@ -2,13 +2,13 @@
 -include("puzzle.hrl").
 -export([new/1, foreach_solution/2, print_puzzle/1]).
 
-%% Returns a new Puzzle with empty Positions.
+%% Returns a new Puzzle with empty Cells.
 %%
 new() ->
-    #puzzle{positions = positions:new(),
+    #puzzle{cells = cells:new(),
 	    exclusions = exclusions:new()}.
 
-%% Returns a new Puzzle with each Position initialized according to
+%% Returns a new Puzzle with each Cell initialized according to
 %% Setup, which is a string of 81 digits or dashes.
 %%
 new(Setup) ->
@@ -28,7 +28,7 @@ new(Setup) ->
       Zipped).
 
 %% Given a Setup string, returns a list of numbers or undefined for
-%% each position.
+%% each cell.
 %%
 to_digits(Setup) ->
     [case Char of
@@ -63,10 +63,10 @@ yield_solutions(failed, _Yield) ->
 solve(This, Collector) when ?is_puzzle(This), is_pid(Collector) ->
     %% We get here either because we're done, we've failed, or we have
     %% to guess and recurse.  We can distinguish by examining the
-    %% unplaced position with the fewest possibilities remaining.
+    %% unplaced cell with the fewest possibilities remaining.
 
-    MinPosition = positions:min_by_possible_size(This#puzzle.positions),
-    Possible = position:get_possible(MinPosition),
+    MinCell = cells:min_by_possible_size(This#puzzle.cells),
+    Possible = cell:get_possible(MinCell),
 
     case Possible == undefined of
 	true ->
@@ -78,22 +78,22 @@ solve(This, Collector) when ?is_puzzle(This), is_pid(Collector) ->
 		    %% Failed.  Return no solutions.
 		    collector:yield(Collector, failed);
 		_ ->
-		    %% Found an unplaced position with two or more
+		    %% Found an unplaced cell with two or more
 		    %% possibilities.  Guess each possibility and
 		    %% either spawn a solver or (for the last
 		    %% possibility) recurse.
 		    PossibileDigitList = possible:to_list(Possible),
 		    do_guesses(This, Collector,
-			       position:get_number(MinPosition),
+			       cell:get_number(MinCell),
 			       PossibileDigitList)
 	    end
     end.
 
-%% Fpr each Digit in the list, use it as a guess for Position Number
+%% Fpr each Digit in the list, use it as a guess for Cell Number
 %% and try to solve the resulting Puzzle.
 %%
 do_guesses(This, Collector, Number, [Digit|Rest]) ->
-    Guess = puzzle:place(This, Number, Digit),
+    Guess = place(This, Number, Digit),
     %% If this is the last guess then just solve in this process.  If
     %% there are more guesses to make then spawn a solver for this one
     %% and recurse to process the rest.
@@ -105,28 +105,28 @@ do_guesses(This, Collector, Number, [Digit|Rest]) ->
 	    do_guesses(This, Collector, Number, Rest)
     end.
 
-%% Returns a new Puzzle with Digit placed at Position AtNumber.  The
-%% possible sets of all Positions are updated to account for the new
+%% Returns a new Puzzle with Digit placed in Cell AtNumber.  The
+%% possible sets of all Cells are updated to account for the new
 %% placement.
 %%
 place(This, AtNumber, Digit)
   when ?is_puzzle(This), is_number(AtNumber), is_number(Digit) ->
-    Positions = This#puzzle.positions,
+    Cells = This#puzzle.cells,
     %% Place the Digit.
-    Positions2 = positions:update(
-		   Positions,
-		   AtNumber,
-		   fun (Position) -> position:place(Position, Digit) end),
-    %% Exclude Digit from excluded Positions.
-    ExclusionList = exclusions:get_list_for_position(
+    Cells2 = cells:update(
+	       Cells,
+	       AtNumber,
+	       fun (Cell) -> cell:place(Cell, Digit) end),
+    %% Exclude Digit from excluded Cells.
+    ExclusionList = exclusions:get_list_for_cell(
 		      This#puzzle.exclusions, AtNumber),
-    Positions3 = positions:do_exclusions(Positions2, Digit, ExclusionList),
-    This#puzzle{positions = Positions3}.
+    Cells3 = cells:do_exclusions(Cells2, Digit, ExclusionList),
+    This#puzzle{cells = Cells3}.
 
 %% Returns a raw string of 81 digits and dashes, like the argument to new.
 %%
 to_string(This) when ?is_puzzle(This) ->
-    positions:to_string(This#puzzle.positions).
+    cells:to_string(This#puzzle.cells).
 
 %% Returns a string that prints out as a grid of digits.
 %%

@@ -1,2 +1,2 @@
--record(puzzle, {positions, exclusions}).
+-record(puzzle, {cells, exclusions}).
 -define(is_puzzle(Term), is_record(Term, puzzle)).

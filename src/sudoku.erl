@@ -20,8 +20,8 @@ main(Filename) ->
 
 %% Returns the contents of Filename as a String with "#" comments and
 %% whitespace deleted.  The result should be a string of 81 digits or
-%% dashes, where the digits are given by the puzzle and the dash
-%% positions are to be solved for.
+%% dashes, where the digits are given by the puzzle and the dash cells
+%% are to be solved for.
 %%
 get_setup(Filename) ->
     {ok, Raw} = file:read_file(Filename),

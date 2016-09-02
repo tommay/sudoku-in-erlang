@@ -1,24 +1,24 @@
 -module(exclusions).
--export([new/0, get_list_for_position/2]).
+-export([new/0, get_list_for_cell/2]).
 
-%% Returns an array mapping Number to a list of all positions excluded
-%% by that position number, e.g., 0 => [0, 1, 2, ...].
+%% Returns an array mapping Number to a list of all cell numbers
+%% excluded by that cell number, e.g., 0 => [0, 1, 2, ...].
 
 new() ->
     ExclusionLists = create_exclusion_lists(),
-    ByPosition =
-	[get_exclusions_for_position(ExclusionLists, Number)
+    ByCell =
+	[get_exclusions_for_cell(ExclusionLists, Number)
 	 || Number <- lists:seq(0, 80)],
-    array:from_list(ByPosition).
+    array:from_list(ByCell).
 
 %% Returns a list for each row, column, and square listing the
-%% positions it contains: [[0, 1, 2, ...], [0, 9, 18, ...], ...]
+%% cells it contains: [[0, 1, 2, ...], [0, 9, 18, ...], ...]
 %%
 create_exclusion_lists() ->
     ZeroToEight = lists:seq(0, 8),
 
     %% Create a List for each row, containing the Number of each
-    %% position in the row.
+    %% cell in the row.
     %% XXX USe Exclusion objects with names?
 
     Rows = [[Row*9 + Col || Col <- ZeroToEight] || Row <- ZeroToEight],
@@ -43,17 +43,17 @@ create_exclusion_lists() ->
 
 %% Used during initialization.
 %%
-get_exclusions_for_position(ExclusionLists, Number)
+get_exclusions_for_cell(ExclusionLists, Number)
   when is_list(ExclusionLists), is_number(Number) ->
-    ByPosition =
+    ByCell =
 	[ExclusionList || ExclusionList <- ExclusionLists,
 			  lists:member(Number, ExclusionList)],
-    Flattened = lists:flatten(ByPosition),
+    Flattened = lists:flatten(ByCell),
     Filtered = [N || N <- Flattened, N /= Number],
     spud:uniq(Filtered).
 
 %% Used by place.
 %%
-get_list_for_position(This, Number) when is_number(Number) ->
+get_list_for_cell(This, Number) when is_number(Number) ->
     array:get(Number, This).
 
