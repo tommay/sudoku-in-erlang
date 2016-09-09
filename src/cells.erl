@@ -27,12 +27,11 @@ min_by_possible_size(This) ->
       This,
       fun (Cell) ->
 	      %% Sort placed Cells to the end.
-	      case cell:get_placed(Cell) of
+	      case cell:get_possible(Cell) of
 		  undefined ->
-		      Possible = cell:get_possible(Cell),
-		      possible:size(Possible);
-		  _ ->
-		      10
+		      10;
+		  Possible ->
+		      possible:size(Possible)
 	      end
       end).
 
