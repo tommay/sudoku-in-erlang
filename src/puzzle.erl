@@ -1,12 +1,16 @@
 -module(puzzle).
--include("puzzle.hrl").
 -export([new/1, foreach_solution/2, print_puzzle/1]).
+
+-include("puzzle.hrl").
+-include("unknown.hrl").
 
 %% Returns a new Puzzle with empty Cells.
 %%
 new() ->
-    #puzzle{cells = cells:new(),
-	    exclusions = exclusions:new()}.
+    #puzzle{
+       placed = [],
+       unknown = [unknown:new(N) || N <- lists:seq(0, 80)]
+      }.
 
 %% Returns a new Puzzle with each Cell initialized according to
 %% Setup, which is a string of 81 digits or dashes.
@@ -65,16 +69,16 @@ solve(This, Collector) when ?is_puzzle(This), is_pid(Collector) ->
     %% to guess and recurse.  We can distinguish by examining the
     %% unplaced cell with the fewest possibilities remaining.
 
-    MinCell = cells:min_by_possible_size(This#puzzle.cells),
-    Possible = cell:get_possible(MinCell),
-
-    case Possible == undefined of
-	true ->
+    case This#puzzle.unknown of
+	[] ->
             %% Solved.  Return This as a solution.
 	    collector:yield(Collector, {solved, This});
-	false ->
-	    case possible:size(Possible) of
-		0 ->
+	Unknowns ->
+	    MinUnknown = unknown:min_by_num_possible(Unknowns),
+	    Possible = unknown:possible(MinUnknown),
+
+	    case Possible of
+		[] ->
 		    %% Failed.  Return no solutions.
 		    collector:yield(Collector, failed);
 		_ ->
@@ -82,10 +86,9 @@ solve(This, Collector) when ?is_puzzle(This), is_pid(Collector) ->
 		    %% possibilities.  Guess each possibility and
 		    %% either spawn a solver or (for the last
 		    %% possibility) recurse.
-		    PossibileDigitList = possible:to_list(Possible),
 		    do_guesses(This, Collector,
-			       cell:get_number(MinCell),
-			       PossibileDigitList)
+			       unknown:cell_number(MinUnknown),
+			       Possible)
 	    end
     end.
 
@@ -105,28 +108,35 @@ do_guesses(This, Collector, Number, [Digit|Rest]) ->
 	    do_guesses(This, Collector, Number, Rest)
     end.
 
-%% Returns a new Puzzle with Digit placed in Cell AtNumber.  The
+%% Returns a new Puzzle with Digit placed in Cell CellNumber.  The
 %% possible sets of all Cells are updated to account for the new
 %% placement.
 %%
-place(This, AtNumber, Digit)
-  when ?is_puzzle(This), is_number(AtNumber), is_number(Digit) ->
-    Cells = This#puzzle.cells,
-    %% Place the Digit.
-    Cells2 = cells:update(
-	       Cells,
-	       AtNumber,
-	       fun (Cell) -> cell:place(Cell, Digit) end),
-    %% Exclude Digit from excluded Cells.
-    ExclusionList = exclusions:get_list_for_cell(
-		      This#puzzle.exclusions, AtNumber),
-    Cells3 = cells:do_exclusions(Cells2, Digit, ExclusionList),
-    This#puzzle{cells = Cells3}.
+place(This, CellNumber, Digit)
+  when ?is_puzzle(This), is_number(CellNumber), is_number(Digit) ->
+    place(This, unknown:new(CellNumber), Digit);
+place(This, Unknown, Digit)
+  when ?is_puzzle(This), ?is_unknown(Unknown), is_number(Digit) ->
+    CellNumber = unknown:cell_number(Unknown),
+    Placed = [{CellNumber, Digit} | This#puzzle.placed],
+    Unknown2 = lists:filtermap(
+		 fun (E) ->
+			 case unknown:cell_number(E) /= CellNumber of
+			     true -> {true, unknown:place(E, Unknown, Digit)};
+			     false -> false
+			 end
+		 end,
+		 This#puzzle.unknown),
+    This#puzzle{placed = Placed, unknown = Unknown2}.
 
 %% Returns a raw string of 81 digits and dashes, like the argument to new.
 %%
 to_string(This) when ?is_puzzle(This) ->
-    cells:to_string(This#puzzle.cells).
+    Placed = [{Number, $0 + Digit} || {Number, Digit} <- This#puzzle.placed],
+    Unknown = [{unknown:cell_number(U), $-} || U <- This#puzzle.unknown],
+    All = Placed ++ Unknown,
+    Sorted = lists:sort(All),
+    [Char || {_, Char} <- Sorted].
 
 %% Returns a string that prints out as a grid of digits.
 %%
