@@ -1,5 +1,5 @@
 -module(puzzle).
--export([new/1, foreach_solution/2, print_puzzle/1]).
+-export([new/1, foreach_solution/2, to_puzzle_string/1]).
 
 -include("puzzle.hrl").
 -include("unknown.hrl").
@@ -140,7 +140,7 @@ to_string(This) when ?is_puzzle(This) ->
 
 %% Returns a string that prints out as a grid of digits.
 %%
-to_puzzle(This) when ?is_puzzle(This) ->
+to_puzzle_string(This) when ?is_puzzle(This) ->
     String = to_string(This),
     string:join(
       lists:map(
@@ -155,8 +155,3 @@ to_puzzle(This) when ?is_puzzle(This) ->
 	end,
 	spud:slices(String, 27)),
       "\n\n").
-
-%% Prints the to_puzzle string.
-%%
-print_puzzle(This) when ?is_puzzle(This) ->
-    io:format("~s~n", [to_puzzle(This)]).

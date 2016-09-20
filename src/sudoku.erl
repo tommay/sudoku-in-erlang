@@ -13,7 +13,7 @@ main(Filename) ->
     puzzle:foreach_solution(
       Puzzle,
       fun (SolvedPuzzle) ->
-	      puzzle:print_puzzle(SolvedPuzzle),
+	      io:format("~s~n", [puzzle:to_puzzle_string(SolvedPuzzle)]),
 	      io:format("~n~n")
       end),
     io:format("stats: ~s~n", [stats:to_string(stats:get())]).
