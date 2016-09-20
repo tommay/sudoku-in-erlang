@@ -48,17 +48,19 @@ foreach_solution(This, Yield) when ?is_puzzle(This), is_function(Yield) ->
     Collector = self(),
     spawn_solver(This, Collector),
     collector:collect_and_yield_results(
-      fun (Result) -> yield_solutions(Result, Yield) end).
+      fun (Result) ->
+	      case Result of
+		  {solved, Puzzle} ->
+		      stats:solved(),
+		      Yield(Puzzle);
+		  failed ->
+		      stats:failed()
+	      end
+      end).
 
 spawn_solver(Puzzle, Collector) when ?is_puzzle(Puzzle), is_pid(Collector) ->
     stats:spawned(),
     collector:spawn_solver(Collector, fun () -> solve(Puzzle, Collector) end).
-
-yield_solutions({solved, Puzzle}, Yield) when ?is_puzzle(Puzzle) ->
-    stats:solved(),
-    Yield(Puzzle);
-yield_solutions(failed, _Yield) ->
-    stats:failed().
 
 %% Try to solve this Puzzle then report back solved or failed to the
 %% Collector, and possibly spawn further processes that also report
