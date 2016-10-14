@@ -3,15 +3,15 @@
 
 -include("unknown.hrl").
 
-%% Returns a new unknown for Cell_number.  Determine the
+%% Returns a new unknown for CellNumber.  Determine the
 %% unknown's row, column, and square, set all digits possible.
 %%
-new(Cell_number) when is_number(Cell_number)->
-  Row = Cell_number div 9,
-  Col = Cell_number rem 9,
+new(CellNumber) when is_number(CellNumber)->
+  Row = CellNumber div 9,
+  Col = CellNumber rem 9,
   Square = (Row div 3)*3 + (Col div 3),
   #unknown{
-     cell_number = Cell_number,
+     cell_number = CellNumber,
      row = Row,
      col = Col,
      square = Square,
