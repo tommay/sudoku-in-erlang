@@ -43,6 +43,9 @@ to_digits(Setup) ->
      end || Char <- Setup].
 
 %% Solve this Puzzle and call Yield with each solved Puzzle.
+%% XXC The solver sends solved puzzles asynchornously and can send them
+%% faster than Yield can process them which uses unbounded memory until
+%% the process is killed.
 %%
 foreach_solution(This, Yield) when ?is_puzzle(This), is_function(Yield) ->
     Collector = self(),
